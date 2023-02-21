@@ -1,0 +1,8 @@
+{
+  "sdk": {
+    "version": "7.0.100"
+  },
+  "ConnectionStrings": {
+    "FbConnection": "Server=(localdb)\\MSSQLLocalDB;DataBase=FBDB;TrustServerCertificate=true;"
+  }
+}

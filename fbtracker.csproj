@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <UserSecretsId>74d3a0a8-2338-452b-a139-796303bcb8ee</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.1"/>
+    <PackageReference Include="Telegram.Bot" Version="18.0.0"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.3"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.3"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.3"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.3"/>
+  </ItemGroup>
+</Project>
