@@ -27,6 +27,6 @@ dotnet user-secrets set "DbPassword" "<Your DB Password>"
 dotnet run
 ```
 or build and run from Visual Studio
->Note: Seeding data from the first running can take a time
+>Note: Seeding data from the first running can take a long time
 ## Examples
 See the [Telegram Price Cheker](https://t.me/futpricecheker)  for example
