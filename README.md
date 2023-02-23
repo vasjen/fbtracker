@@ -1,7 +1,7 @@
 FbTracker
 ============
 
-FbTracker is a free Futbin price tracker (Snipe tracker) for trading in FUT Market. For every tradable card via Telegram.Bot sending notifications to chat.
+FbTracker is a free Futbin price tracker (Snipe scanner) for trading in FUT Market. For every tradable card via Telegram.Bot sending notifications to chat.
 
 ![Example](https://github.com/vasjen/fbtracker/blob/master/img/Example.png)
 
