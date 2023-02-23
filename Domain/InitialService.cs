@@ -20,13 +20,13 @@ namespace fbtracker {
             string version=string.Empty;
             string position=string.Empty;
             int counter=0;
-            int MaxPage=await GetMaxNumberPage("https://www.futbin.com/23/players?page=1&player_rating=82-99&ps_price=5000-15000000");
-            for (int pageNumber=25; pageNumber<=30; pageNumber++)
+            int MaxPage=await GetMaxNumberPage("https://www.futbin.com/23/players?page=1&player_rating=82-99&ps_price=15000-15000000");
+            for (int pageNumber=1; pageNumber<=MaxPage; pageNumber++)
              {  
                 try 
                 {
                     var httpRequestMessage = new HttpRequestMessage(
-                    HttpMethod.Get, $"https://www.futbin.com/23/players?page={pageNumber}&player_rating=82-99&ps_price=5000-15000000");
+                    HttpMethod.Get, $"https://www.futbin.com/23/players?page={pageNumber}&player_rating=82-99&ps_price=15000-15000000");
                     var _client = _service.GetHttpClient();
                     
                     var httpResponseMessage = await _client.SendAsync(httpRequestMessage);
