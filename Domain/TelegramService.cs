@@ -37,19 +37,20 @@ namespace fbtracker {
             
            
 
-            string ProfiteMessage=$"<a href=\"{URL}{Card.FbId}\">{Card.ShortName} {Card.Version}"+
+            string ProfiteMessage=$"<a href=\"{URL}{Card.FbId}\">{Card.ShortName} {Card.Version} "+
                 $"{Card.Raiting} {Card.Position}</a>" + 
                 $"\n \n<u>New price:</u> <b>{ProfitPlayer.Price.ToString("0,0")}</b> &#128176  \n<u>Profit:"+
                 $"</u><b>{ProfitPlayer.ProfitValue.ToString("0,0")}</b> &#128176  &#128200 \n<u>Next price:</u> "+
-                $"<b>{ProfitPlayer.SellPrice.ToString("0,0")}</b> &#128176 \n";
-            string HistoryMessage = $" \n<u>Average:</u> <b>{avgPrice.ToString("0,0")}</b> &#128202 \n \n"+
+                $"\n<b>{ProfitPlayer.SellPrice.ToString("0,0")}</b> &#128176 \n"+
+                $"<u>Change:</u> <b>{ProfitPlayer.Percentage.ToString("0.00%")}</b> &#9889 \n \n ";
+            string HistoryMessage = $" \n<u>Average:</u> <b>{avgPrice.ToString("0,0")}</b> &#128202 \n\n"+
                 $"&#9201 List of the last five sales: &#9201\n  \n";
             var sales = lastTenSales.Take(5).ToList();
                  DateTime dtime = new DateTime();
 
             foreach (var t in sales)
             {
-             HistoryMessage=HistoryMessage+"<i>"+t.Price.ToString("0,0")+" in "+dtime.TimeOfDay+" (UTC+0:00)</i>\n";
+             HistoryMessage=HistoryMessage+"<i>"+t.Price.ToString("0,0")+" in "+dtime.TimeOfDay+" (UTC±0:00)</i>\n";
             }
         
 

@@ -41,7 +41,8 @@ namespace fbtracker.Migrations
                     CardId = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<int>(type: "int", nullable: false),
                     SellPrice = table.Column<int>(type: "int", nullable: false),
-                    ProfitValue = table.Column<int>(type: "int", nullable: false)
+                    ProfitValue = table.Column<int>(type: "int", nullable: false),
+                    Percentage = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {

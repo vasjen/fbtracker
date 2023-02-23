@@ -77,6 +77,9 @@ namespace fbtracker.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Price")
                         .HasColumnType("int");
 

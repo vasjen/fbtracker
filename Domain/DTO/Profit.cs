@@ -12,6 +12,7 @@ namespace fbtracker
         public int Price {get;set;}
         public int SellPrice {get;set;}
         public int ProfitValue {get;set;}
+        public decimal Percentage {get;set;} 
         public Card Card {get;set;}
 
     }

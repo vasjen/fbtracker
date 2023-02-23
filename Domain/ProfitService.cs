@@ -8,7 +8,7 @@ namespace fbtracker
     {
         public int ProxyCount =7;
         private  const double _afterTax=0.95;
-        private  const double _minProfit=0.03;
+        private  const double _minProfit=1000;
         private readonly ISalesHistoryService _history;
         private readonly IPriceService _priceService;
         private readonly FbDbContext _context;
@@ -66,7 +66,7 @@ namespace fbtracker
             if (NextPrice!=0 && CurrentPrice!=0)
             {   
             int profit = (int)(NextPrice*_afterTax-CurrentPrice);
-                if (profit> 0 && profit>=CurrentPrice*_minProfit){  
+                if (profit> 0 && profit>=_minProfit){  
                     
                     var history = await _history.GetSalesHistoryAsync(FBDataId);
 
@@ -84,7 +84,8 @@ namespace fbtracker
                             CardId=card!.CardId,
                             Price=CurrentPrice,
                             SellPrice=NextPrice,
-                            ProfitValue=profit
+                            ProfitValue=profit,
+                            Percentage=(decimal)CurrentPrice/NextPrice  
                             
 
                         };
