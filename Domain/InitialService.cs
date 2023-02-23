@@ -21,7 +21,7 @@ namespace fbtracker {
             string position=string.Empty;
             int counter=0;
             int MaxPage=await GetMaxNumberPage("https://www.futbin.com/23/players?page=1&player_rating=82-99&ps_price=5000-15000000");
-            for (int pageNumber=1; pageNumber<=MaxPage; pageNumber++)
+            for (int pageNumber=25; pageNumber<=30; pageNumber++)
              {  
                 try 
                 {
@@ -149,10 +149,7 @@ namespace fbtracker {
                         if (result.Result[i].Contains("data-player-resource")){
                             string id = result.Result[i].Remove(result.Result[i].LastIndexOf('"')).Substring(result.Result[i].LastIndexOf("=\"")+2);
                               Card.FbDataId=int.Parse(id);
-                              counter++;
-                              System.Console.WriteLine("Add DataId {0} to Card {1}",Card.FbDataId,Card.ShortName);
-
-                            break;
+                              break;
                         }
                 
                      }

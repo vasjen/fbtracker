@@ -13,6 +13,7 @@ namespace fbtracker
 
         private int maxFbIdFromSite;
         private int maxFbIdFromDb;
+        private int maxFbIdFromLastUpdate;
 
         public UpdateService(FbDbContext context, IHttpClientService service, IInitialService initial)
         {
@@ -30,19 +31,22 @@ namespace fbtracker
             var client = _service.GetHttpClient();
             var Page = await Scraping.GetPageAsStrings(client,Url);
             maxFbIdFromSite = GetMaxFbId(Page); 
-            if (maxFbIdFromSite>maxFbIdFromDb)
+            if (maxFbIdFromSite>maxFbIdFromDb & maxFbIdFromSite>maxFbIdFromLastUpdate)
               {
                 System.Console.WriteLine("Need update, founded a {0} new card", maxFbIdFromSite-maxFbIdFromDb);
                 System.Console.WriteLine("Trying to get a new cards");
                   
                   List<int> Fbids = new();
-                  for (int i=maxFbIdFromDb+1;i<=maxFbIdFromSite;i++)
+                  for (int i=maxFbIdFromDb+1;i<=maxFbIdFromSite;i++){
                       Fbids.Add(i);
+                  }
                   var NewCards =  await GetNewCardsRange(Fbids);
                   _context.AddRange(NewCards);
                   _context.SaveChanges(); 
+                  System.Console.WriteLine("Total add {0} new tradable cards",NewCards.Count());
+                  maxFbIdFromLastUpdate=maxFbIdFromSite;
                   foreach (var card in NewCards){
-                    System.Console.WriteLine($"Had add card with name: {card.ShortName} => FbId: {card.FbId}, FbDataId: {card.FbDataId}, Tradable? {card.Tradable}");
+                    System.Console.WriteLine($"Had add card with name: {card.ShortName} {card.Version} => FbId: {card.FbId}, FbDataId: {card.FbDataId}, Tradable? {card.Tradable}");
                   }
               }
               else {
@@ -80,11 +84,17 @@ namespace fbtracker
         {
             List<Card> Cards = new();
             Card card = new();
-            foreach(var FbId in FbIds)
+            foreach (var Fbid in FbIds)
                 {
-                    card =await _initial.GetNewCardAsync(FbId);
-                    Cards.Add(card);
-                }
+                    try {
+                        card =await _initial.GetNewCardAsync(Fbid);
+                        if (card.Raiting>=82){
+                        Cards.Add(card);
+                        }
+                    }
+                    catch (Exception ex) {System.Console.WriteLine(ex.Message);}
+                    
+                };
             return Cards;
         }
     }
