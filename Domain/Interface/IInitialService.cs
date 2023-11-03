@@ -4,8 +4,10 @@ namespace fbtracker
     {   
             Task<IEnumerable<Card>> GetCardsRangeAsync();
             Task<Card> GetNewCardAsync(int FbId);
-            
+            IAsyncEnumerable<Card> GetCards(string url);
+            Task<int> GetMaxNumberPage(string Url);
 
-         
+
+
     }
 }

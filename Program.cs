@@ -47,7 +47,7 @@ internal class Program
           while (true)
           { 
             await ProfitService.FindingProfitAsync();
-              await update.ExistNewCardsAsync();
+              // await update.ExistNewCardsAsync();
            
           }
              

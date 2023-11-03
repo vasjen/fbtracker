@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
+using HtmlAgilityPack;
 
 namespace fbtracker {
 
@@ -20,13 +21,13 @@ namespace fbtracker {
             string version=string.Empty;
             string position=string.Empty;
             int counter=0;
-            int MaxPage=await GetMaxNumberPage("https://www.futbin.com/23/players?page=1&player_rating=82-99&ps_price=15000-15000000");
+            int MaxPage=await GetMaxNumberPage("https://www.futbin.com/players?page=1&player_rating=82-99&ps_price=20000-15000000");
             for (int pageNumber=1; pageNumber<=MaxPage; pageNumber++)
              {  
                 try 
                 {
                     var httpRequestMessage = new HttpRequestMessage(
-                    HttpMethod.Get, $"https://www.futbin.com/23/players?page={pageNumber}&player_rating=82-99&ps_price=15000-15000000");
+                    HttpMethod.Get, $"https://www.futbin.com/players?page={pageNumber}&player_rating=82-99&ps_price=20000-15000000");
                     var _client = _service.GetHttpClient();
                     
                     var httpResponseMessage = await _client.SendAsync(httpRequestMessage);
@@ -95,7 +96,7 @@ namespace fbtracker {
         public async Task<Card> GetNewCardAsync(int FbId)
         {
             var client=_service.GetHttpClient();
-            string URL = $"https://www.futbin.com/23/player/{FbId}";
+            string URL = $"https://www.futbin.com/player/{FbId}";
             var page = await Scraping.GetPageAsStrings(client,URL);
             Card card = new();
             for (int i=0;i<page.Length;i++)
@@ -142,7 +143,7 @@ namespace fbtracker {
         {
             int counter=0;
                 var client = _service.GetHttpClient();
-                var result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/23/player/{Card.FbId}");
+                var result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{Card.FbId}");
                     if (result!=null){
                      for (int i=0; i<result.Result.Length;i++)
                      {
@@ -161,7 +162,7 @@ namespace fbtracker {
                      
         }
 
-        private async Task<int> GetMaxNumberPage(string Url)
+        public async Task<int> GetMaxNumberPage(string Url)
         {
             var client = _service.GetHttpClient();
             var result = await Scraping.GetPageAsStrings(client,Url);
@@ -180,13 +181,38 @@ namespace fbtracker {
             System.Console.WriteLine("Max page is {0}", MaxPage);
             return MaxPage;
         }
+        public async IAsyncEnumerable<Card> GetCards(string url)
+        {
+            HttpClient client = _service.GetHttpClient();
+            string page = await client.GetStringAsync(url);
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(page);
+            
+            int nodesIndex = 0;
+            HtmlNodeCollection? link = doc.DocumentNode.SelectNodes("//a[@class='player_name_players_table get-tp']");
+            for (int i = 1; i <= 61; i += 2)
+            {
+                if (i == 21 || i == 42)
+                    i++;
+                yield return new Card()
+                {
+                    FbId = Int32.Parse(link[nodesIndex++].GetAttributeValue("data-site-id", "")),
+                    ShortName = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[2]/div[1]/a"),
+                    Raiting = Int32.Parse( ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[3]/span")),
+                    Position = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[4]/div[1]"),
+                    Version = ParseFromDoc(doc,
+                        $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]"),
+                
+                };
+            }
+        }
         private async  Task IsTradeble(Card card)
          {
           
             string Updated=string.Empty;
             var _client = _service.GetHttpClient();
 
-            string requestUri = $"http://futbin.com/23/playerPrices?player={card.FbDataId}";
+            string requestUri = $"http://futbin.com/playerPrices?player={card.FbDataId}";
                
                 
             Task.Delay(1500).Wait();
@@ -214,7 +240,12 @@ namespace fbtracker {
                         }
 
                 }
-                
+            
+        private static string ParseFromDoc(HtmlDocument page,string xPath)
+            =>  page.DocumentNode
+                .SelectSingleNode(xPath)
+                .InnerText;
+
             
 
         }

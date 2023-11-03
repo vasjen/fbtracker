@@ -6,7 +6,7 @@ namespace fbtracker
 {
     public class ProfitService :IProfitService
     {
-        public int ProxyCount =7;
+        public int ProxyCount = 10;
         private  const double _afterTax=0.95;
         private  const double _minProfit=1000;
         private readonly ISalesHistoryService _history;
