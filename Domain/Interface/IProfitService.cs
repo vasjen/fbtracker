@@ -2,6 +2,6 @@ namespace fbtracker
 {
     internal interface IProfitService
     {
-        public  Task FindingProfitAsync ();
+        public  Task FindingProfitAsync (IAsyncEnumerable<Card> Cards);
     }
 }

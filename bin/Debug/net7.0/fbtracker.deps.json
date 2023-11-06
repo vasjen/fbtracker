@@ -8,12 +8,16 @@
     ".NETCoreApp,Version=v7.0": {
       "fbtracker/1.0.0": {
         "dependencies": {
+          "HtmlAgilityPack": "1.11.54",
           "Microsoft.EntityFrameworkCore": "7.0.3",
           "Microsoft.EntityFrameworkCore.Design": "7.0.3",
           "Microsoft.EntityFrameworkCore.SqlServer": "7.0.3",
           "Microsoft.EntityFrameworkCore.Tools": "7.0.3",
           "Microsoft.Extensions.DependencyInjection": "7.0.0",
           "Microsoft.VisualStudio.Web.CodeGeneration.Design": "7.0.1",
+          "Npgsql": "7.0.6",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "7.0.3",
+          "System.Linq.Async": "6.0.1",
           "Telegram.Bot": "18.0.0"
         },
         "runtime": {
@@ -51,6 +55,14 @@
           "lib/netstandard2.0/Azure.Identity.dll": {
             "assemblyVersion": "1.6.0.0",
             "fileVersion": "1.600.22.20503"
+          }
+        }
+      },
+      "HtmlAgilityPack/1.11.54": {
+        "runtime": {
+          "lib/netstandard2.0/HtmlAgilityPack.dll": {
+            "assemblyVersion": "1.11.54.0",
+            "fileVersion": "1.11.54.0"
           }
         }
       },
@@ -851,22 +863,22 @@
           "runtimes/win-arm/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-arm",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "5.0.1.0"
           },
           "runtimes/win-arm64/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-arm64",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "5.0.1.0"
           },
           "runtimes/win-x64/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "5.0.1.0"
           },
           "runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "5.0.1.0"
           }
         }
       },
@@ -1349,6 +1361,31 @@
           }
         }
       },
+      "Npgsql/7.0.6": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "7.0.0"
+        },
+        "runtime": {
+          "lib/net7.0/Npgsql.dll": {
+            "assemblyVersion": "7.0.6.0",
+            "fileVersion": "7.0.6.0"
+          }
+        }
+      },
+      "Npgsql.EntityFrameworkCore.PostgreSQL/7.0.3": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "7.0.3",
+          "Microsoft.EntityFrameworkCore.Abstractions": "7.0.3",
+          "Microsoft.EntityFrameworkCore.Relational": "7.0.3",
+          "Npgsql": "7.0.6"
+        },
+        "runtime": {
+          "lib/net7.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
+            "assemblyVersion": "7.0.3.0",
+            "fileVersion": "7.0.3.0"
+          }
+        }
+      },
       "NuGet.Common/6.3.1": {
         "dependencies": {
           "NuGet.Frameworks": "6.3.1"
@@ -1771,6 +1808,17 @@
           "System.Resources.ResourceManager": "4.3.0",
           "System.Runtime": "4.3.0",
           "System.Runtime.Extensions": "4.3.0"
+        }
+      },
+      "System.Linq.Async/6.0.1": {
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/System.Linq.Async.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.1.35981"
+          }
         }
       },
       "System.Linq.Expressions/4.3.0": {
@@ -2309,6 +2357,13 @@
       "path": "azure.identity/1.6.0",
       "hashPath": "azure.identity.1.6.0.nupkg.sha512"
     },
+    "HtmlAgilityPack/1.11.54": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-bgB79N4urc4D7hrD4R+Qk6CjPiYOfs6vfXNsmw3nCcfQEQvBQGjfAcl5k/tB1ZP1hA0d7xXs0jK8xAXV36IVUg==",
+      "path": "htmlagilitypack/1.11.54",
+      "hashPath": "htmlagilitypack.1.11.54.nupkg.sha512"
+    },
     "Humanizer.Core/2.14.1": {
       "type": "package",
       "serviceable": true,
@@ -2785,6 +2840,20 @@
       "path": "newtonsoft.json/13.0.1",
       "hashPath": "newtonsoft.json.13.0.1.nupkg.sha512"
     },
+    "Npgsql/7.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TAqvwRnm3NJ0QvN7cvu6geJkbI0XPzGVRElVY5hF4gsgA+BnE12x6GM1TLhdeq+7ZKvvo3BD8jXKnXmr3tvdEw==",
+      "path": "npgsql/7.0.6",
+      "hashPath": "npgsql.7.0.6.nupkg.sha512"
+    },
+    "Npgsql.EntityFrameworkCore.PostgreSQL/7.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3iVz7vcPAZt6iBSjJ8XyjtIP19jilNOJqTiTCs2UHWhpTyP+FbNhnzCBE/oyD3n49McmmenjKpva+yTy7q1z/g==",
+      "path": "npgsql.entityframeworkcore.postgresql/7.0.3",
+      "hashPath": "npgsql.entityframeworkcore.postgresql.7.0.3.nupkg.sha512"
+    },
     "NuGet.Common/6.3.1": {
       "type": "package",
       "serviceable": true,
@@ -3183,6 +3252,13 @@
       "sha512": "sha512-5DbqIUpsDp0dFftytzuMmc0oeMdQwjcP/EWxsksIz/w1TcFRkZ3yKKz0PqiYFMmEwPSWw+qNVqD7PJ889JzHbw==",
       "path": "system.linq/4.3.0",
       "hashPath": "system.linq.4.3.0.nupkg.sha512"
+    },
+    "System.Linq.Async/6.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0YhHcaroWpQ9UCot3Pizah7ryAzQhNvobLMSxeDIGmnXfkQn8u5owvpOH0K6EVB+z9L7u6Cc4W17Br/+jyttEQ==",
+      "path": "system.linq.async/6.0.1",
+      "hashPath": "system.linq.async.6.0.1.nupkg.sha512"
     },
     "System.Linq.Expressions/4.3.0": {
       "type": "package",

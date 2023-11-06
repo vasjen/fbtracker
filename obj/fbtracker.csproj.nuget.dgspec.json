@@ -1,26 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "/Users/vasjen/fbtracker/fbtracker.csproj": {}
+    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj": {}
   },
   "projects": {
-    "/Users/vasjen/fbtracker/fbtracker.csproj": {
+    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/vasjen/fbtracker/fbtracker.csproj",
+        "projectUniqueName": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
         "projectName": "fbtracker",
-        "projectPath": "/Users/vasjen/fbtracker/fbtracker.csproj",
-        "packagesPath": "/Users/vasjen/.nuget/packages/",
-        "outputPath": "/Users/vasjen/fbtracker/obj/",
+        "projectPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
+        "packagesPath": "C:\\Users\\vaSt\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/vasjen/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\vaSt\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.pkg.github.com/hereisyourgitanton/index.json": {}
         },
         "frameworks": {
           "net7.0": {
@@ -38,6 +39,10 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "HtmlAgilityPack": {
+              "target": "Package",
+              "version": "[1.11.54, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[7.0.3, )"
@@ -62,6 +67,18 @@
               "target": "Package",
               "version": "[7.0.1, )"
             },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[7.0.6, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[7.0.3, )"
+            },
+            "System.Linq.Async": {
+              "target": "Package",
+              "version": "[6.0.1, )"
+            },
             "Telegram.Bot": {
               "target": "Package",
               "version": "[18.0.0, )"
@@ -78,6 +95,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[7.0.12, 7.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[7.0.12, 7.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[7.0.12, 7.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[7.0.12, 7.0.12]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -86,7 +121,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.101/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100-rc.2.23502.2\\RuntimeIdentifierGraph.json"
         }
       }
     }
