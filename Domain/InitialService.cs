@@ -11,7 +11,7 @@ namespace fbtracker {
         private readonly IHttpClientService _service;
         public InitialService(IHttpClientService service) => _service=service;
          
-        public  async Task<IEnumerable<Card>> GetCardsRangeAsync(){
+        public  async Task<IEnumerable<Card>> GetCardsRangeAsync(HttpClient client){
             
 
             List<Card> cards = new List<Card>();
@@ -28,9 +28,9 @@ namespace fbtracker {
                 {
                     var httpRequestMessage = new HttpRequestMessage(
                     HttpMethod.Get, $"https://www.futbin.com/players?page={pageNumber}&player_rating=82-99&ps_price=20000-15000000");
-                    var _client = _service.GetHttpClient();
+                   
                     
-                    var httpResponseMessage = await _client.SendAsync(httpRequestMessage);
+                    var httpResponseMessage = await client.SendAsync(httpRequestMessage);
                     var response = await httpResponseMessage.Content.ReadAsStringAsync();
                   
                     await Task.Delay(1000);
@@ -85,7 +85,7 @@ namespace fbtracker {
             System.Console.WriteLine($"Total added a {counter} cards");
             Parallel.ForEach(cards, new ParallelOptions {MaxDegreeOfParallelism = 5}, async p=> { 
                 
-                    GetDataId(p);
+                    GetDataId(p, client);
                     IsTradeble(p).Wait();
 
             });
@@ -134,23 +134,24 @@ namespace fbtracker {
                     card.FbId=FbId;
                 }
             };
-             GetDataId(card);
+             GetDataId(card, client);
             IsTradeble(card).Wait();
             
             return card;
         }
-        private void GetDataId(Card Card)
+        public int GetDataId(Card Card, HttpClient client)
         {
             int counter=0;
-                var client = _service.GetHttpClient();
+                
                 var result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{Card.FbId}");
+                var fbdataid = 0;
                     if (result!=null){
                      for (int i=0; i<result.Result.Length;i++)
                      {
                         if (result.Result[i].Contains("data-player-resource")){
                             string id = result.Result[i].Remove(result.Result[i].LastIndexOf('"')).Substring(result.Result[i].LastIndexOf("=\"")+2);
                               Card.FbDataId=int.Parse(id);
-                              break;
+                              fbdataid =  int.Parse(id);
                         }
                 
                      }
@@ -159,7 +160,8 @@ namespace fbtracker {
                         System.Console.WriteLine("Page is null for {0} - {1} : {2}",Card.ShortName, Card.Version, Card.FbId);
                         System.Console.WriteLine("Or FBDataId not found, rly? {0}",Card.FbDataId);
                      }
-                     
+
+                    return fbdataid;
         }
 
         public async Task<int> GetMaxNumberPage(string Url)
@@ -181,9 +183,9 @@ namespace fbtracker {
             System.Console.WriteLine("Max page is {0}", MaxPage);
             return MaxPage;
         }
-        public async IAsyncEnumerable<Card> GetCards(string url)
+        public async IAsyncEnumerable<Card> GetCards(string url, HttpClient client)
         {
-            HttpClient client = _service.GetHttpClient();
+            
             string page = await client.GetStringAsync(url);
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(page);
@@ -194,6 +196,9 @@ namespace fbtracker {
             {
                 if (i == 21 || i == 42)
                     i++;
+                if (nodesIndex >= link.Count)
+                    break;
+                
                 yield return new Card()
                 {
                     FbId = Int32.Parse(link[nodesIndex++].GetAttributeValue("data-site-id", "")),

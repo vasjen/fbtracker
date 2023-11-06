@@ -75,6 +75,10 @@
               "target": "Package",
               "version": "[7.0.3, )"
             },
+            "System.Linq.Async": {
+              "target": "Package",
+              "version": "[6.0.1, )"
+            },
             "Telegram.Bot": {
               "target": "Package",
               "version": "[18.0.0, )"

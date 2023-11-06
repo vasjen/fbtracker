@@ -15,15 +15,18 @@ namespace fbtracker{
          
        
 
-        public async Task<int[]> GetPriceAsync(int FBDataID)
-        {    
-            int CurrentPrice=0;
+        public async Task<int[]> GetPriceAsync(int FBDataID, HttpClient client)
+        {
+            if (FBDataID == 0)
+                return new []{0,0};
+            
+            int CurrentPrice = 0;
             int NextPrice=0;
-            var _client = _service.GetHttpClient();
+            // var _client = _service.GetHttpClient();
 
-            string requestUri = $"http://futbin.com/23/playerPrices?player={FBDataID}";
+            string requestUri = $"https://futbin.com/24/playerPrices?player={FBDataID}";
             Task.Delay(1000).Wait();  
-            var response = await _client.GetAsync(requestUri);
+            var response = await client.GetAsync(requestUri);
             System.Console.WriteLine(response.StatusCode);
 
             if (response.IsSuccessStatusCode){   
@@ -38,7 +41,7 @@ namespace fbtracker{
                     }
                     catch (Exception ex) { 
                         System.Console.WriteLine(ex.Message);
-                        System.Console.WriteLine(response.Content.ReadAsStringAsync());
+                        System.Console.WriteLine(await response.Content.ReadAsStringAsync());
                         }
 
                 }

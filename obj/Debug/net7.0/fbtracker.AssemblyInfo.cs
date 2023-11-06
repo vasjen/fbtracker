@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("fbtracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e5ef5ebbb025c04c9a44e1ef0be665471957f2e0")]
 [assembly: System.Reflection.AssemblyProductAttribute("fbtracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("fbtracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

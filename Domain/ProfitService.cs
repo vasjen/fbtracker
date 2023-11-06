@@ -1,74 +1,93 @@
 
+using fbtracker.Services;
+using fbtracker.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace fbtracker
 {
-    public class ProfitService :IProfitService
+    public class ProfitService(ISalesHistoryService _history, IPriceService priceService, FbDbContext context,
+            ITelegramService tggbot, IHttpClientService client, IInitialService initial, IServiceProvider _services)
+        : IProfitService
     {
         public int ProxyCount = 10;
         private  const double _afterTax=0.95;
         private  const double _minProfit=1000;
-        private readonly ISalesHistoryService _history;
-        private readonly IPriceService _priceService;
-        private readonly FbDbContext _context;
-        private readonly ITelegramService _tgbot;
-        private readonly IHttpClientService _client;
+        private readonly FbDbContext _context = context;
+        private readonly IHttpClientService _client = client;
 
         private List<Profit> ProfitPlayerList {get;set;} = new List<Profit>();
-        
 
-        public ProfitService(ISalesHistoryService history, IPriceService priceService, FbDbContext context, ITelegramService tggbot, IHttpClientService client)
+
+        public async Task FindingProfitAsync (IAsyncEnumerable<Card> Cards)
         {
-            _history=history;
-            _priceService=priceService;
-            _context=context;
-            _tgbot=tggbot;
-            _client=client;
-        }
-        
-        public async Task FindingProfitAsync ()
-        {
-            var Cards = await _context.Cards
-                          .AsNoTracking()
-                          .Where(p=>p.Tradable==true)
-                          .ToListAsync();
-              System.Console.WriteLine("Load {0} card",Cards.Count);
-            List<int> ErrorCards = new();
-           
-            Parallel.ForEach(Cards, new ParallelOptions { MaxDegreeOfParallelism = ProxyCount }, async p =>
-            {
-                
-                try
+            // var Cards = await _context.Cards
+                          // .AsNoTracking()
+                          // .Where(p=>p.Tradable==true)
+                          // .ToListAsync();
+             using (IServiceScope scope = _services.CreateScope())
+             {
+                 IWebService webService = 
+                     scope.ServiceProvider
+                         .GetRequiredService<IWebService>();
+                List<HttpClient> clients = await  webService.CreateHttpClients(webService.CreateHandlers(webService.GetProxyList()));
+                int currentIndex = 0;
+                HttpClient GetNextClient()
                 {
-                    CheckProfitAsync(p.FbDataId).Wait();
+                    HttpClient client = clients[currentIndex];
+                    currentIndex = (currentIndex + 1) % clients.Count;
+                    return client;
                 }
-                catch (Exception ex) { Console.WriteLine(ex.Message);
-                    ErrorCards.Add(p.FbDataId);
-                }
+                Parallel.ForEach(await Cards.ToListAsync(),
+                    new ParallelOptions { MaxDegreeOfParallelism = clients.Count }, async p =>
+                    {
+                        if (p.FbDataId == 0)
+                            p.FbDataId = initial.GetDataId(p, GetNextClient());
+                        try
+                        {
+                            var client = GetNextClient();
+                            CheckProfitAsync(p, client).Wait();
+                            
+                        }
+                        catch (Exception ex) { 
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine($"Error with {p.FbDataId}");
+                        }
                 
-            });
-         
-           
-            foreach (var item in ErrorCards) {
-                await CheckProfitAsync(item);
-            }
-            ErrorCards.Clear();
+                    });
+                
+             }
+            List<int> ErrorCards = new();
+            // await foreach (var item in Cards)
+            // {
+                // if (item.FbDataId == 0)
+                    // item.FbDataId = _initial.GetDataId(item);
+
+                // Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}",item.ShortName,item.Version, item.Position, item.Raiting);
+                // await CheckProfitAsync(item.FbDataId);
+            // }
+            
         }
         
-        private async Task CheckProfitAsync(int FBDataId)
+        private async Task CheckProfitAsync(Card card, HttpClient client)
         {
             await Task.Delay(1000);
-            var Prices= await _priceService.GetPriceAsync(FBDataId);
+            var Prices= await priceService.GetPriceAsync(card.FbDataId, client);
             var CurrentPrice=Prices[0];
             var NextPrice=Prices[1];
-           System.Console.WriteLine($"Check  id: {FBDataId}, CurrentPrice: {CurrentPrice}, NextPrice: {NextPrice} \n");
+           System.Console.WriteLine($"Check  id: {card.FbDataId}, CurrentPrice: {CurrentPrice}, NextPrice: {NextPrice} \n");
             if (NextPrice!=0 && CurrentPrice!=0)
             {   
             int profit = (int)(NextPrice*_afterTax-CurrentPrice);
                 if (profit> 0 && profit>=_minProfit){  
-                    
-                    var history = await _history.GetSalesHistoryAsync(FBDataId);
+                    if (card.FbDataId == 237679)
+                        return;
+                    var history = await _history.GetSalesHistoryAsync(card.FbDataId, client);
+                    if (history is null)
+                    {
+                        System.Console.WriteLine($"History is null or incorrect for {card.ShortName}");
+                        return;
+                    }
 
                     var lastTenSales = history?.Where(p=>p.status.Contains("closed"))
                              .Take(10);
@@ -77,8 +96,12 @@ namespace fbtracker
                       if (NextPrice<=avgPrice)  
                       {
                         System.Console.WriteLine("\t => !!PROFIT!!!");
+                        Console.WriteLine($"{card.ShortName } {card.Version} {card.Raiting} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
+                        foreach (var item in lastTenSales)
+                        {
+                            Console.WriteLine($"{item.unix_date} {item.Price} {item.status} {item.updated}");
+                        }
                         
-                        var card = await _context.Cards.AsNoTracking().Where(p=>p.FbDataId==FBDataId).FirstOrDefaultAsync();
 
                         Profit NewProfit = new Profit(){
                             CardId=card!.CardId,
@@ -90,21 +113,22 @@ namespace fbtracker
 
                         };
                         System.Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
-                        await _context.AddAsync(NewProfit);
-                        await _context.SaveChangesAsync();
-                        await _tgbot.SendInfo(NewProfit,avgPrice,lastTenSales);
+                        // await _context.AddAsync(NewProfit);
+                        // await _context.SaveChangesAsync();
+                        await tggbot.SendInfo(NewProfit,avgPrice,lastTenSales, card);
                       }
                      
                 }
                 else
-                System.Console.WriteLine($"ID: {FBDataId}. No profit"); 
+                System.Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
             }
         
-
+        
             
         }
      
-
         
+       
+       
     }
 }

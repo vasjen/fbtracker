@@ -2,6 +2,6 @@ namespace fbtracker
 {
     public interface ISalesHistoryService
     {
-       public Task<IEnumerable<SalesHistory>?> GetSalesHistoryAsync (int fbDataId);
+       public Task<IEnumerable<SalesHistory>?> GetSalesHistoryAsync (int fbDataId, HttpClient client);
     }
 }

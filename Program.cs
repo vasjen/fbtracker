@@ -1,4 +1,7 @@
 
+using System.Net;
+using fbtracker.Services;
+using fbtracker.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 
@@ -20,6 +23,13 @@ internal class Program
                                 .AddUserSecrets<Program>();
             return configurationBuilder.Build();
         });
+        Services.AddTransient<IWebService, WebService>();
+        Services.AddHttpClient("proxy",options =>
+        {
+            var Configuration = Services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            string? apikey = Configuration.GetValue<string>("Proxy:API");
+            options.BaseAddress = new Uri($"https://proxy-seller.io/personal/api/v1/{apikey}/proxy/list/ipv4");
+        });
         Services.AddTransient<IHttpClientService,HttpClientService>();
         Services.AddTransient<IPriceService, PriceService>();
         Services.AddTransient<IProfitService, ProfitService>();
@@ -40,13 +50,22 @@ internal class Program
         .Build();
        
        
-        await SeedData.EnsurePopulatedAsync(host);
+       var cards =  SeedData.EnsurePopulatedAsync(host);
         var update = host.Services.GetRequiredService<IUpdateService>();
         var ProfitService = host.Services.GetRequiredService<IProfitService>();
        
           while (true)
-          { 
-            await ProfitService.FindingProfitAsync();
+          {
+              try
+              {
+                await ProfitService.FindingProfitAsync(cards);
+
+              }
+              catch (Exception e)
+              {
+                  Console.WriteLine(e.Message);
+                  
+              }
               // await update.ExistNewCardsAsync();
            
           }

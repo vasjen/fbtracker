@@ -897,3 +897,4 @@ C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.pdb
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.genruntimeconfig.cache
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\ref\fbtracker.dll
 C:\Users\vaSt\RiderProjects\fbtracker\bin\Debug\net7.0\HtmlAgilityPack.dll
+C:\Users\vaSt\RiderProjects\fbtracker\bin\Debug\net7.0\System.Linq.Async.dll

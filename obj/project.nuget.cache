@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "+IVHIcJ8RZ0li37ORuhZDVNfzeXYsGFc4KSKGzF6wUnDJNX6a2DXr50ifJ37HPEd6Tt+2EiO4gO8UfMFgKs5qw==",
+  "dgSpecHash": "LKTCpqjjyAWR73RMO7VXOM2G3ePucj6q822FZypwyV/Tj3/3KZ5p1nEetqg6ZtSFs6ju4qNbx7fMs/f4BlYNZw==",
   "success": true,
   "projectFilePath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
   "expectedPackageFiles": [
@@ -134,6 +134,7 @@
     "C:\\Users\\vaSt\\.nuget\\packages\\system.io.filesystem.primitives\\4.3.0\\system.io.filesystem.primitives.4.3.0.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.io.pipelines\\6.0.3\\system.io.pipelines.6.0.3.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.linq\\4.3.0\\system.linq.4.3.0.nupkg.sha512",
+    "C:\\Users\\vaSt\\.nuget\\packages\\system.linq.async\\6.0.1\\system.linq.async.6.0.1.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.linq.expressions\\4.3.0\\system.linq.expressions.4.3.0.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.memory.data\\1.0.2\\system.memory.data.1.0.2.nupkg.sha512",
