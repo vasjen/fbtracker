@@ -1,3 +1,3 @@
 ﻿<Project>
-  <Import Project="../build/fbtracker.props" />
+  <Import Project="..\build\fbtracker.props" />
 </Project>

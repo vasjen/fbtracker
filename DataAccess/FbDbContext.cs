@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace fbtracker{
     public class FbDbContext: DbContext {
@@ -15,11 +16,11 @@ namespace fbtracker{
     }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var conStrBuilder = new SqlConnectionStringBuilder(
+        var conStrBuilder = new NpgsqlConnectionStringBuilder(
             _config.GetConnectionString("FbConnection"));
             conStrBuilder.Password = _config.GetValue<string>("DbPassword");
             var connection = conStrBuilder.ConnectionString;
-            optionsBuilder.UseSqlServer(connection);
+            optionsBuilder.UseNpgsql(connection);
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {  
