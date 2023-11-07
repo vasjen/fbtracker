@@ -881,7 +881,6 @@ C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.AssemblyInfoInp
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.AssemblyInfo.cs
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.csproj.CoreCompileInputs.cache
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\fbtracker.sourcelink.json
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\staticwebassets.build.json
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\staticwebassets.development.json
 C:\Users\vaSt\RiderProjects\fbtracker\obj\Debug\net7.0\staticwebassets\msbuild.fbtracker.Microsoft.AspNetCore.StaticWebAssets.props
