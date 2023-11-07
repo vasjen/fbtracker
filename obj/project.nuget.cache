@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "LKTCpqjjyAWR73RMO7VXOM2G3ePucj6q822FZypwyV/Tj3/3KZ5p1nEetqg6ZtSFs6ju4qNbx7fMs/f4BlYNZw==",
+  "dgSpecHash": "0riQjuMJigAgeGEaybpysc9gInsTdeCymo//tYvoCjHHY4ptO4qPZLgQYAfGCcH0x6PKm89fOxOR3OT2KoWKnw==",
   "success": true,
   "projectFilePath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
   "expectedPackageFiles": [
@@ -188,11 +188,7 @@
     "C:\\Users\\vaSt\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.xml.readerwriter\\4.3.0\\system.xml.readerwriter.4.3.0.nupkg.sha512",
     "C:\\Users\\vaSt\\.nuget\\packages\\system.xml.xdocument\\4.3.0\\system.xml.xdocument.4.3.0.nupkg.sha512",
-    "C:\\Users\\vaSt\\.nuget\\packages\\telegram.bot\\18.0.0\\telegram.bot.18.0.0.nupkg.sha512",
-    "C:\\Users\\vaSt\\.nuget\\packages\\microsoft.netcore.app.ref\\7.0.12\\microsoft.netcore.app.ref.7.0.12.nupkg.sha512",
-    "C:\\Users\\vaSt\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\7.0.12\\microsoft.windowsdesktop.app.ref.7.0.12.nupkg.sha512",
-    "C:\\Users\\vaSt\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\7.0.12\\microsoft.aspnetcore.app.ref.7.0.12.nupkg.sha512",
-    "C:\\Users\\vaSt\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\7.0.12\\microsoft.netcore.app.host.win-x64.7.0.12.nupkg.sha512"
+    "C:\\Users\\vaSt\\.nuget\\packages\\telegram.bot\\18.0.0\\telegram.bot.18.0.0.nupkg.sha512"
   ],
   "logs": []
 }
