@@ -36,12 +36,12 @@ namespace fbtracker {
               
                 
 
-                    var numbers = await initial.GetMaxNumberPage("https://www.futbin.com/players?player_rating=82-99&ps_price=20000-15000000");
+                    var numbers = await initial.GetMaxNumberPage("https://www.futbin.com/players?player_rating=80-99&ps_price=10000-15000000");
                     for (int i = 1; i <= numbers; i++)
                     {
                         var client = GetNextClient();
                         var cards =  initial.GetCards(
-                            $"https://www.futbin.com/players?page={i}&player_rating=82-99&ps_price=20000-15000000", client);
+                            $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client);
                         await foreach (var item in cards)
                         {
                             Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}",item.ShortName,item.Version, item.Position, item.Raiting);

@@ -12,7 +12,7 @@ namespace fbtracker
     {
         public int ProxyCount = 10;
         private  const double _afterTax=0.95;
-        private  const double _minProfit=1000;
+        private  const double _minProfit=500;
         private readonly FbDbContext _context = context;
         private readonly IHttpClientService _client = client;
 
@@ -93,14 +93,14 @@ namespace fbtracker
                              .Take(10);
                              
                     var avgPrice=(lastTenSales!.OrderByDescending(p=>p.Price).Select(p=>p.Price).Sum())/10;
-                      if (NextPrice<=avgPrice)  
-                      {
+                      // if (NextPrice<=avgPrice)  
+                      // {
                         System.Console.WriteLine("\t => !!PROFIT!!!");
                         Console.WriteLine($"{card.ShortName } {card.Version} {card.Raiting} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
-                        foreach (var item in lastTenSales)
-                        {
-                            Console.WriteLine($"{item.unix_date} {item.Price} {item.status} {item.updated}");
-                        }
+                        // foreach (var item in lastTenSales)
+                        // {
+                            // Console.WriteLine($"{item.unix_date} {item.Price} {item.status} {item.updated}");
+                        // }
                         
 
                         Profit NewProfit = new Profit(){
@@ -116,7 +116,7 @@ namespace fbtracker
                         // await _context.AddAsync(NewProfit);
                         // await _context.SaveChangesAsync();
                         await tggbot.SendInfo(NewProfit,avgPrice,lastTenSales, card);
-                      }
+                      // }
                      
                 }
                 else
