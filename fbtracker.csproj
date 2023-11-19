@@ -21,9 +21,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.3"/>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Remove="Migrations\20231030214504_init_postgres.cs" />
     <Compile Remove="Migrations\20231030214504_init_postgres.Designer.cs" />
   </ItemGroup>
