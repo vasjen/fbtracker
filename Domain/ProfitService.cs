@@ -89,8 +89,8 @@ namespace fbtracker.Domain
                              .Take(10);
                              
                     var avgPrice=(lastTenSales!.OrderByDescending(p=>p.Price).Select(p=>p.Price).Sum())/10;
-                       if (NextPrice <= avgPrice)  
-                       {
+                       // if (NextPrice <= avgPrice)  
+                       // {
                             Console.WriteLine("\t => !!PROFIT!!!");
                             Console.WriteLine($"{card.ShortName } {card.Version} {card.Raiting} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
                             Profit newProfit = new() {
@@ -102,7 +102,7 @@ namespace fbtracker.Domain
                         };
                         System.Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
                         await tggbot.SendInfo(newProfit,avgPrice,lastTenSales, card);
-                     }
+                     // }
                 }
                 else
                 System.Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
