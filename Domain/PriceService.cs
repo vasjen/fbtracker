@@ -3,18 +3,7 @@ using System.Text.Json.Nodes;
 namespace fbtracker{
 
     public class PriceService : IPriceService{
-        private readonly IHttpClientService _service;
-        private readonly FbDbContext _context;
-
-        public PriceService(IHttpClientService service, FbDbContext context)
-        {
-            
-            _service=service;
-            _context=context;
-        }
-         
        
-
         public async Task<int[]> GetPriceAsync(int FBDataID, HttpClient client)
         {
             if (FBDataID == 0)
@@ -22,7 +11,6 @@ namespace fbtracker{
             
             int CurrentPrice = 0;
             int NextPrice=0;
-            // var _client = _service.GetHttpClient();
 
             string requestUri = $"https://futbin.com/24/playerPrices?player={FBDataID}";
             Task.Delay(1000).Wait();  
@@ -39,10 +27,11 @@ namespace fbtracker{
                         Price = jsonNod[$"{FBDataID}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>();
                         NextPrice=ConvertPriceToInt(Price);
                     }
-                    catch (Exception ex) { 
+                    catch (Exception ex) 
+                    { 
                         System.Console.WriteLine(ex.Message);
                         System.Console.WriteLine(await response.Content.ReadAsStringAsync());
-                        }
+                    }
 
                 }
                 int[] Prices = new int[2] {CurrentPrice,NextPrice};

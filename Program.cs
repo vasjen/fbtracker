@@ -1,5 +1,6 @@
 
 using System.Net;
+using fbtracker.Domain;
 using fbtracker.Services;
 using fbtracker.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -9,13 +10,12 @@ namespace fbtracker{
 
 internal class Program
 {
-    
     private static async Task Main(string[] args)
     {  
-         var host = new HostBuilder()
-        .ConfigureServices( (Services) =>
+         IHost host = new HostBuilder()
+        .ConfigureServices( services =>
        {
-        Services.AddTransient<IConfiguration>(sp =>
+        services.AddTransient<IConfiguration>(sp =>
         {
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
             configurationBuilder.AddJsonFile("appsettings.json")
@@ -23,24 +23,21 @@ internal class Program
                                 .AddUserSecrets<Program>();
             return configurationBuilder.Build();
         });
-        Services.AddTransient<IWebService, WebService>();
-        Services.AddHttpClient("proxy",options =>
+        services.AddTransient<IWebService, WebService>();
+        services.AddHttpClient("proxy",options =>
         {
-            var Configuration = Services.BuildServiceProvider().GetRequiredService<IConfiguration>();
-            string? apikey = Configuration.GetValue<string>("Proxy:API");
-            options.BaseAddress = new Uri($"https://proxy-seller.io/personal/api/v1/{apikey}/proxy/list/ipv4");
+            IConfiguration configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            string? apikey = configuration.GetValue<string>("Proxy:API");
+            options.BaseAddress = new Uri(configuration.GetValue<string>("Proxy:Service") + apikey) ?? throw new ArgumentNullException(nameof(options.BaseAddress));
+            
         });
-        Services.AddTransient<IHttpClientService,HttpClientService>();
-        Services.AddTransient<IPriceService, PriceService>();
-        Services.AddTransient<IProfitService, ProfitService>();
-        Services.AddTransient<IInitialService,InitialService>();
-        Services.AddTransient<IUpdateService,UpdateService>();
-        Services.AddTransient<ISalesHistoryService,SalesHistoryService>();
-        Services.AddDbContext<FbDbContext>(ServiceLifetime.Transient);
-        Services.AddTransient<ITelegramService,TelegramService>();
-        Services.AddTransient<ProxyHandler>();
+        services.AddTransient<IPriceService, PriceService>();
+        services.AddTransient<IProfitService, ProfitService>();
+        services.AddTransient<ISalesHistoryService,SalesHistoryService>();
+        services.AddDbContext<FbDbContext>(ServiceLifetime.Transient);
+        services.AddTransient<ITelegramService,TelegramService>();
         
-        Services.AddSingleton<ITelegramBotClient,TelegramBotClient>( (p)=>
+        services.AddSingleton<ITelegramBotClient,TelegramBotClient>( p=>
         {
             var token = p.GetService<IConfiguration>().GetValue<string>("Telegram:Token");
             return new TelegramBotClient(token: token);
@@ -50,23 +47,21 @@ internal class Program
         .Build();
        
        
-       var cards =  SeedData.EnsurePopulatedAsync(host);
-        var update = host.Services.GetRequiredService<IUpdateService>();
-        var ProfitService = host.Services.GetRequiredService<IProfitService>();
+       IProfitService profitService = host.Services.GetRequiredService<IProfitService>();
        
           while (true)
           {
               try
               {
-                await ProfitService.FindingProfitAsync(cards);
+                IAsyncEnumerable<Card> cards =  SeedData.EnsurePopulatedAsync(host);
+                profitService.FindingProfitAsync(cards).GetAwaiter().GetResult();
 
               }
               catch (Exception e)
               {
                   Console.WriteLine(e.Message);
-                  
+                  break;
               }
-              // await update.ExistNewCardsAsync();
            
           }
              

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj": {}
+    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbfb\\fbtracker.csproj": {}
   },
   "projects": {
-    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj": {
+    "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbfb\\fbtracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
+        "projectUniqueName": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbfb\\fbtracker.csproj",
         "projectName": "fbtracker",
-        "projectPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbtracker.csproj",
+        "projectPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbfb\\fbtracker.csproj",
         "packagesPath": "C:\\Users\\vaSt\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\obj\\",
+        "outputPath": "C:\\Users\\vaSt\\RiderProjects\\fbtracker\\fbfb\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\vaSt\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -66,6 +66,10 @@
             "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
               "target": "Package",
               "version": "[7.0.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
             },
             "Npgsql": {
               "target": "Package",

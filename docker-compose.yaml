@@ -9,7 +9,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+      - $APPDATA/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     networks:

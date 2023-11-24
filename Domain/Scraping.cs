@@ -3,7 +3,7 @@ namespace fbtracker{
 
          public static async Task<string[]> GetPageAsStrings(HttpClient client,string Url){
             
-            var httpRequestMessage = new HttpRequestMessage(
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
                     HttpMethod.Get,Url);
              var send = await client.SendAsync(httpRequestMessage);
             var response= await send.Content.ReadAsStringAsync();

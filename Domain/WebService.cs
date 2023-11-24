@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Eafctracker.Models;
 using fbtracker.Services.Interfaces;
 using Newtonsoft.Json;
@@ -11,29 +12,36 @@ public class WebService(IHttpClientFactory clientFactory) : IWebService
 
     public async IAsyncEnumerable<WebProxy> GetProxyList()
     {
-        string proxiesInJson = await _client.GetStringAsync(_client.BaseAddress);
-        Proxies? proxiesFromJson = JsonConvert.DeserializeObject<Proxies>(proxiesInJson);
-
+        string jsonData = @"{
+            ""type"": ""ipv4"",
+            ""page"": 1,
+            ""page_size"": 10,
+            ""sort"": 1
+        }";
+        StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        HttpResponseMessage proxiesInJson = await _client.PostAsync(_client.BaseAddress, content);
+        Proxies? proxiesFromJson = JsonConvert.DeserializeObject<Proxies>(await proxiesInJson.Content.ReadAsStringAsync());
+        
         if (proxiesFromJson == null)
         {
             yield break;
         }
-
-        foreach (Proxy item in proxiesFromJson.data.items)
+    
+        foreach (Proxy item in proxiesFromJson.list.data)
         {
             yield return new WebProxy
             {
-                Address = new Uri("http://" + item.ip + ":" + item.port_http),
+                Address = new Uri("http://" + item.ip + ":" + item.http_port),
                 Credentials = new NetworkCredential(item.login, item.password)
             };
         }
     }
     
     public async IAsyncEnumerable<HttpClientHandler> CreateHandlers(IAsyncEnumerable<WebProxy> proxies)
-    {
+    {   
         await foreach (WebProxy proxy in proxies)
         {
-            var handler = new HttpClientHandler
+            HttpClientHandler handler = new HttpClientHandler
             {
                 Proxy = proxy
             };
@@ -62,6 +70,18 @@ public class WebService(IHttpClientFactory clientFactory) : IWebService
         {
             yield return await client.GetStringAsync("https://api.ipify.org/");
         }
+    }
+    
+    private async Task<bool> IsValidProxy(WebProxy proxy)
+    {
+        HttpClientHandler handler = new HttpClientHandler
+        {
+            Proxy = proxy
+        };
+        HttpClient client = new HttpClient(handler: handler, disposeHandler: true);
+        HttpResponseMessage response = await client.GetAsync("https://futbin.com/");
+        Console.WriteLine("For proxy {0} status code is {1}", proxy.Address, response.StatusCode);
+        return response.IsSuccessStatusCode;
     }
     
 }
