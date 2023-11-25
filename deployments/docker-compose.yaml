@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: ../src
+      dockerfile: ./dockerfile
+    ports:
+      - 9000:80
+#    depends_on:
+#      - postgres
+    volumes:
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - mynetwork
+    container_name: app
+
+#  postgres:
+#    image: postgres:latest
+#    container_name: postgres
+#    restart: unless-stopped
+#    ports:
+#      - '5435:5432'
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=Pass44w0rd
+#      - POSTGRES_DB=Card
+#    command:
+#      - "postgres"
+#      - "-c"
+#      - "wal_level=logical"
+#      - "-c"
+#      - "max_prepared_transactions=10"
+#    volumes:
+#      - postgres-data:/var/lib/postgresql/data
+#    networks:
+#      - mynetwork
+
+networks:
+  mynetwork:
+
+#volumes:
+#  postgres-data:
