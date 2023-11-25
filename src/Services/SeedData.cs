@@ -1,5 +1,4 @@
-﻿using fbtracker.Services;
-using fbtracker.Services.Interfaces;
+﻿using fbtracker.Services.Interfaces;
 using HtmlAgilityPack;
 
 namespace fbtracker.Domain {
@@ -7,8 +6,7 @@ namespace fbtracker.Domain {
     public static class SeedData {
 
         public static async IAsyncEnumerable<Card> EnsurePopulatedAsync(IHost host) {
-            FbDbContext context = host.Services
-                .CreateScope().ServiceProvider.GetRequiredService<FbDbContext>();
+            
            
             using (IServiceScope scope = host.Services.CreateScope())
             {
@@ -79,7 +77,6 @@ namespace fbtracker.Domain {
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                // string ip = await client.GetStringAsync("http://api.ipify.org/");
                 Console.WriteLine("Error from ip: {0}",ip);
                 yield break;
             }

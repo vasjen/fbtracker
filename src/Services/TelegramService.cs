@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -7,15 +7,13 @@ namespace fbtracker {
     public class TelegramService : ITelegramService
     {
         private readonly ITelegramBotClient _client;
-        private readonly FbDbContext _context;
         private readonly IConfiguration _config;
         public readonly string _chatId;
         private const string URL="https://www.futbin.com/player/";
 
-        public TelegramService(ITelegramBotClient client, FbDbContext context, IConfiguration config)
+        public TelegramService(ITelegramBotClient client, IConfiguration config)
     {
         _client=client;
-        _context=context;
         _config=config;
         _chatId=config.GetSection("Telegram").GetValue<string>("ChatId");
     }
