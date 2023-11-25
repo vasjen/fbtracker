@@ -3,18 +3,28 @@ using fbtracker.Services.Interfaces;
 
 namespace fbtracker.Domain
 {
-    public class ProfitService(
-            ISalesHistoryService _history, 
-            IPriceService priceService,
-            ITelegramService tggbot, 
-            IServiceProvider _services)
+    public class ProfitService
         : IProfitService
     {
         public int ProxyCount = 10;
+        private readonly ISalesHistoryService _historyService;
+        private readonly IPriceService _priceService;
+        private readonly ITelegramService _tggbot;
+        private readonly IServiceProvider _services;
         private  const double AFTER_TAX = 0.95;
         private  const double MIN_PROFIT = 500;
 
-
+        public ProfitService(
+            ISalesHistoryService history, 
+            IPriceService priceService,
+            ITelegramService tggbot, 
+            IServiceProvider services)
+        {
+            _historyService = history;
+            _priceService = priceService;
+            _tggbot = tggbot;
+            _services = services;
+        }
         public async Task FindingProfitAsync (IAsyncEnumerable<Card> Cards)
         {
              using (IServiceScope scope = _services.CreateScope())
@@ -68,7 +78,7 @@ namespace fbtracker.Domain
         private async Task CheckProfitAsync(Card card, HttpClient client)
         {
             await Task.Delay(1000);
-            int[] Prices= await priceService.GetPriceAsync(card.FbDataId, client);
+            int[] Prices= await _priceService.GetPriceAsync(card.FbDataId, client);
             int CurrentPrice=Prices[0];
             int NextPrice=Prices[1];
            System.Console.WriteLine($"Check  id: {card.FbDataId}, CurrentPrice: {CurrentPrice}, NextPrice: {NextPrice} \n");
@@ -78,7 +88,7 @@ namespace fbtracker.Domain
                 if (profit> 0 && profit>=MIN_PROFIT){  
                     if (card.FbDataId == 237679)
                         return;
-                    var history = await _history.GetSalesHistoryAsync(card.FbDataId, client);
+                    var history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
                     if (history is null)
                     {
                         System.Console.WriteLine($"History is null or incorrect for {card.ShortName}");
@@ -101,7 +111,7 @@ namespace fbtracker.Domain
                                 Percentage=(decimal)CurrentPrice/NextPrice  
                         };
                         System.Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
-                        await tggbot.SendInfo(newProfit,avgPrice,lastTenSales, card);
+                        await _tggbot.SendInfo(newProfit,avgPrice,lastTenSales, card);
                      // }
                 }
                 else

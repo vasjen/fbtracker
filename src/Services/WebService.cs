@@ -6,10 +6,14 @@ using Newtonsoft.Json;
 
 namespace fbtracker.Services;
 
-public class WebService(IHttpClientFactory clientFactory) : IWebService
+public class WebService : IWebService
 {
-    private readonly HttpClient _client = clientFactory.CreateClient("proxy");
+    private readonly HttpClient _client;
 
+    public WebService(IHttpClientFactory clientFactory)
+    {
+        _client = clientFactory.CreateClient("proxy");
+    }
     public async IAsyncEnumerable<WebProxy> GetProxyList()
     {
         string jsonData = @"{
