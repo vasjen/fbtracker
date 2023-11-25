@@ -64,15 +64,7 @@ public class WebService(IHttpClientFactory clientFactory) : IWebService
         return clients;
     }
 
-    public async IAsyncEnumerable<string> GetIpAddresses(IAsyncEnumerable<HttpClient> clients)
-    {
-        await foreach (HttpClient client in clients)
-        {
-            yield return await client.GetStringAsync("https://api.ipify.org/");
-        }
-    }
-    
-    private async Task<bool> IsValidProxy(WebProxy proxy)
+   private async Task<bool> IsValidProxy(WebProxy proxy)
     {
         HttpClientHandler handler = new HttpClientHandler
         {
