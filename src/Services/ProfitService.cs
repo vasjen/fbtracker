@@ -1,15 +1,14 @@
-using fbtracker.Services;
+using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 
-namespace fbtracker.Domain
+namespace fbtracker.Services
 {
-    public class ProfitService
-        : IProfitService
+    public class ProfitService : IProfitService
     {
         public int ProxyCount = 10;
         private readonly ISalesHistoryService _historyService;
         private readonly IPriceService _priceService;
-        private readonly ITelegramService _tggbot;
+        private readonly ITelegramService _tgbot;
         private readonly IServiceProvider _services;
         private  const double AFTER_TAX = 0.95;
         private  const double MIN_PROFIT = 500;
@@ -17,15 +16,15 @@ namespace fbtracker.Domain
         public ProfitService(
             ISalesHistoryService history, 
             IPriceService priceService,
-            ITelegramService tggbot, 
+            ITelegramService tgbot, 
             IServiceProvider services)
         {
             _historyService = history;
             _priceService = priceService;
-            _tggbot = tggbot;
+            _tgbot = tgbot;
             _services = services;
         }
-        public async Task FindingProfitAsync (IAsyncEnumerable<Card> Cards)
+        public async Task FindingProfitAsync (IAsyncEnumerable<Card> cards)
         {
              using (IServiceScope scope = _services.CreateScope())
              {
@@ -41,7 +40,7 @@ namespace fbtracker.Domain
                     currentIndex = (currentIndex + 1) % clients.Count;
                     return client;
                 }
-                Parallel.ForEach(await Cards.ToListAsync(),
+                Parallel.ForEach(await cards.ToListAsync(),
                     new ParallelOptions { MaxDegreeOfParallelism = clients.Count }, async p =>
                     {
                         if (p.FbDataId == 0)
@@ -56,71 +55,64 @@ namespace fbtracker.Domain
                             Console.WriteLine($"Error with {p.FbDataId}");
                         }
                     });
-                
              }
          }
-        private int GetDataId(Card Card, HttpClient client)
+        private int GetDataId(Card card, HttpClient client)
         {
-            Task<string[]>? result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{Card.FbId}");
+            Task<string[]>? result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{card.FbId}");
             int fbdataid = 0;
-            for (int i=0; i<result.Result.Length;i++)
+            for (int i = 0; i < result.Result.Length; i++)
             {
                 if (result.Result[i].Contains("data-player-resource")){
                     string id = result.Result[i].Remove(result.Result[i].LastIndexOf('"')).Substring(result.Result[i].LastIndexOf("=\"")+2);
-                    Card.FbDataId=int.Parse(id);
+                    card.FbDataId=int.Parse(id);
                     fbdataid =  int.Parse(id);
                 }
-                
             }
-
             return fbdataid;
         }
         private async Task CheckProfitAsync(Card card, HttpClient client)
         {
             await Task.Delay(1000);
-            int[] Prices= await _priceService.GetPriceAsync(card.FbDataId, client);
-            int CurrentPrice=Prices[0];
-            int NextPrice=Prices[1];
-           System.Console.WriteLine($"Check  id: {card.FbDataId}, CurrentPrice: {CurrentPrice}, NextPrice: {NextPrice} \n");
-            if (NextPrice!=0 && CurrentPrice!=0)
+            int[] prices = await _priceService.GetPriceAsync(card.FbDataId, client);
+            int currentPrice = prices[0];
+            int nextPrice = prices[1];
+            Console.WriteLine($"Check  id: {card.FbDataId}, CurrentPrice: {currentPrice}, NextPrice: {nextPrice } \n");
+            if (nextPrice != 0 && currentPrice != 0)
             {   
-            int profit = (int)(NextPrice*AFTER_TAX-CurrentPrice);
-                if (profit> 0 && profit>=MIN_PROFIT){  
-                    if (card.FbDataId == 237679)
-                        return;
-                    var history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
+            int profit = (int)(nextPrice * AFTER_TAX - currentPrice);
+                if (profit > 0 && profit >= MIN_PROFIT){  
+                    
+                    IEnumerable<SalesHistory>? history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
                     if (history is null)
                     {
-                        System.Console.WriteLine($"History is null or incorrect for {card.ShortName}");
+                        Console.WriteLine($"History is null or incorrect for {card.ShortName}");
                         return;
                     }
 
-                    var lastTenSales = history?.Where(p=>p.status.Contains("closed"))
-                             .Take(10);
+                    IEnumerable<SalesHistory>? lastSales = history?
+                             .Where(p => p.status.Contains("closed"))
+                             .Take(20);
                              
-                    var avgPrice=(lastTenSales!.OrderByDescending(p=>p.Price).Select(p=>p.Price).Sum())/10;
+                    double avgPrice=(lastSales!.Average(p => p.Price));
                        // if (NextPrice <= avgPrice)  
                        // {
                             Console.WriteLine("\t => !!PROFIT!!!");
-                            Console.WriteLine($"{card.ShortName } {card.Version} {card.Raiting} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
+                            Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
                             Profit newProfit = new() {
                                 CardId=card!.CardId,
-                                Price=CurrentPrice,
-                                SellPrice=NextPrice,
+                                Price=currentPrice,
+                                SellPrice=nextPrice ,
                                 ProfitValue=profit,
-                                Percentage=(decimal)CurrentPrice/NextPrice  
+                                Percentage=(decimal)currentPrice/nextPrice   
                         };
-                        System.Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
-                        await _tggbot.SendInfo(newProfit,avgPrice,lastTenSales, card);
+                        Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
+                        await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
                      // }
                 }
                 else
-                System.Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
+               Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
             }
         }
-     
-        
-       
-       
-    }
+     }
 }

@@ -1,7 +1,8 @@
-﻿using fbtracker.Services.Interfaces;
+﻿using fbtracker.Models;
+using fbtracker.Services.Interfaces;
 using HtmlAgilityPack;
 
-namespace fbtracker.Domain {
+namespace fbtracker.Services {
 
     public static class SeedData {
 
@@ -20,7 +21,6 @@ namespace fbtracker.Domain {
 
                 HttpClient getNextClient()
                 {
-                   
                     HttpClient client = clients[currentIndex];
                     client.DefaultRequestHeaders
                         .Add("User-Agent","User Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)");
@@ -36,7 +36,7 @@ namespace fbtracker.Domain {
                             $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client);
                         await foreach (Card item in cards)
                         {
-                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}",item.ShortName,item.Version, item.Position, item.Raiting);
+                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}",item.ShortName,item.Version, item.Position, item.Rating);
                             yield return item;
                         }
                     }
@@ -60,7 +60,7 @@ namespace fbtracker.Domain {
                     
                 }
             }
-            System.Console.WriteLine("Max page is {0}", maxPage);
+            Console.WriteLine("Max page is {0}", maxPage);
             return maxPage;
         }
 
@@ -98,7 +98,7 @@ namespace fbtracker.Domain {
                 {
                     FbId = Int32.Parse(link[nodesIndex++].GetAttributeValue("data-site-id", "")),
                     ShortName = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[2]/div[1]/a"),
-                    Raiting = Int32.Parse( ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[3]/span")),
+                    Rating = Int32.Parse( ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[3]/span")),
                     Position = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[4]/div[1]"),
                     Version = ParseFromDoc(doc,
                         $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]"),

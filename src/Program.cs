@@ -1,4 +1,4 @@
-using fbtracker.Domain;
+using fbtracker.Models;
 using fbtracker.Services;
 using fbtracker.Services.Interfaces;
 using Telegram.Bot;
@@ -35,7 +35,7 @@ internal class Program
                 
                 services.AddSingleton<ITelegramBotClient,TelegramBotClient>( p=>
                 {
-                    var token = p.GetService<IConfiguration>().GetValue<string>("Telegram:Token");
+                    string? token = p.GetService<IConfiguration>().GetValue<string>("Telegram:Token");
                     return new TelegramBotClient(token: token);
                 });
             
@@ -57,14 +57,9 @@ internal class Program
                   Console.WriteLine(e.Message);
                   break;
               }
-           
           }
-             
- 
-
-}
-
-
+    }
+    
 }
 }
 

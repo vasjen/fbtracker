@@ -1,55 +1,58 @@
 using System.Text.Json.Nodes;
+using fbtracker.Services.Interfaces;
 
-namespace fbtracker{
+namespace fbtracker.Services
+{
 
     public class PriceService : IPriceService{
        
-        public async Task<int[]> GetPriceAsync(int FBDataID, HttpClient client)
+        public async Task<int[]> GetPriceAsync(int fbDataId, HttpClient client)
         {
-            if (FBDataID == 0)
+            if (fbDataId == 0)
                 return new []{0,0};
             
-            int CurrentPrice = 0;
-            int NextPrice=0;
+            int currentPrice = 0;
+            int nextPrice = 0;
 
-            string requestUri = $"https://futbin.com/24/playerPrices?player={FBDataID}";
+            string requestUri = $"https://futbin.com/24/playerPrices?player={fbDataId}";
             Task.Delay(1000).Wait();  
-            var response = await client.GetAsync(requestUri);
-            System.Console.WriteLine(response.StatusCode);
+            HttpResponseMessage response = await client.GetAsync(requestUri);
+            Console.WriteLine(response.StatusCode);
 
-            if (response.IsSuccessStatusCode){   
+            if (response.IsSuccessStatusCode)
+            {   
                     try
                     {
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
                         JsonNode jsonNod = JsonNode.Parse(jsonResponse);
-                        string Price = jsonNod[$"{FBDataID}"]!["prices"]["ps"]!["LCPrice"].GetValue<string>();
-                        CurrentPrice=ConvertPriceToInt(Price);
-                        Price = jsonNod[$"{FBDataID}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>();
-                        NextPrice=ConvertPriceToInt(Price);
+                        string price = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice"].GetValue<string>();
+                        currentPrice = ConvertPriceToInt(price);
+                        price = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>();
+                        nextPrice = ConvertPriceToInt(price);
                     }
                     catch (Exception ex) 
                     { 
-                        System.Console.WriteLine(ex.Message);
-                        System.Console.WriteLine(await response.Content.ReadAsStringAsync());
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(await response.Content.ReadAsStringAsync());
                     }
 
-                }
-                int[] Prices = new int[2] {CurrentPrice,NextPrice};
-                return Prices;
-            
-
+            }
+            int[] prices = new int[2] {currentPrice,nextPrice};
+            return prices;
         }
         
        
-        private static int ConvertPriceToInt(string price){
-                 if (price.Contains(',')){
-                    price=price.Remove(price.LastIndexOf(','),1);
-                    if (price.Contains(','))
-                    price=price.Remove(price.LastIndexOf(','),1);
-                    }
-            return int.Parse(price);
+        private static int ConvertPriceToInt(string price)
+        {
+            if (price.Contains(','))
+            {
+                price=price.Remove(price.LastIndexOf(','),1);
+                if (price.Contains(','))
+                { 
+                    price=price.Remove(price.LastIndexOf(','),1); 
+                }
             }
-         
-        
+            return Int32.Parse(price);
+        }
     }
 }

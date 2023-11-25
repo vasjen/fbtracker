@@ -1,4 +1,6 @@
-namespace fbtracker
+using fbtracker.Models;
+
+namespace fbtracker.Services.Interfaces
 {
     internal interface IProfitService
     {

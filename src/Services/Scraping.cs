@@ -1,15 +1,10 @@
-namespace fbtracker{
+namespace fbtracker.Services{
     public static class Scraping{
 
-         public static async Task<string[]> GetPageAsStrings(HttpClient client,string Url){
-            
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
-                    HttpMethod.Get,Url);
-             var send = await client.SendAsync(httpRequestMessage);
-            var response= await send.Content.ReadAsStringAsync();
-            var result = response.Split(Environment.NewLine);
-            return result;
-            
-    }
+        public static async Task<string[]> GetPageAsStrings(HttpClient client, string url)
+        {
+            string res = await client.GetStringAsync(url);
+            return res.Split(Environment.NewLine);
+        }
     }
 }

@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace fbtracker 
+namespace fbtracker.Models 
 {
-    public class Profit {
+    public class Profit 
+    {
         [Key]
         public int Id {get;set;}
         public DateTime Date {get;set;} = DateTime.Now;

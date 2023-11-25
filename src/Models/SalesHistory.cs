@@ -1,4 +1,4 @@
-namespace fbtracker {
+namespace fbtracker.Models {
      public class SalesHistory
  {
     public long unix_date {get;set;}

@@ -1,4 +1,4 @@
-﻿namespace Eafctracker.Models;
+﻿namespace fbtracker.Models;
 
 
 public class Proxy

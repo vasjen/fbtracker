@@ -1,63 +1,46 @@
 
+using fbtracker.Models;
+using fbtracker.Services.Interfaces;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
-namespace fbtracker {
+namespace fbtracker.Services {
     public class TelegramService : ITelegramService
     {
         private readonly ITelegramBotClient _client;
-        private readonly IConfiguration _config;
-        public readonly string _chatId;
-        private const string URL="https://www.futbin.com/player/";
+        private readonly string _chatId;
+        private const string URL = "https://www.futbin.com/player/";
 
-        public TelegramService(ITelegramBotClient client, IConfiguration config)
-    {
-        _client=client;
-        _config=config;
-        _chatId=config.GetSection("Telegram").GetValue<string>("ChatId");
-    }
+        public TelegramService(ITelegramBotClient client, IConfiguration config) 
+        {
+            _client = client;
+            _chatId = config.GetSection("Telegram").GetValue<string>("ChatId"); 
+        }
 
        
-        public async Task SendInfo(Profit ProfitPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card card)
+        public async Task SendInfo(Profit profitPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card card)
         {
-            var Notification = await CreateNotificationAsync(ProfitPlayer, avgPrice, lastTenSales, card);
-            await _client.SendTextMessageAsync(_chatId, Notification+$"\n &#11015 Add your deals in comments &#11015", ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
-                        
+            string notification = await CreateNotificationAsync(profitPlayer, avgPrice, lastTenSales, card);
+            await _client.SendTextMessageAsync(
+                _chatId, notification, 
+                ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
         }
 
-         async Task<string> CreateNotificationAsync(Profit ProfitPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card Card){
-        
-            // var Card = await _context.Cards
-                        // .AsNoTracking()
-                        // .Where(p=>p.CardId==ProfitPlayer.CardId)
-                        // .FirstOrDefaultAsync();
+         async Task<string> CreateNotificationAsync(Profit profitPlayer, int avgPrice, IEnumerable<SalesHistory> lastSales, Card card)
+         { 
+             string profitMessage = 
+                                 $"<a href=\"{URL}{card.FbId}\">{card.ShortName} {card.Version} "+
+                                 $"{card.Rating} {card.Position}</a>" + 
+                                 $"\n \n<u>New price:</u> <b>{profitPlayer.Price:0,0}</b> &#128176  \n<u>Profit:"+
+                                 $"</u><b>{profitPlayer.ProfitValue:0,0}</b> &#128200 \n<u>Old price:</u> "+
+                                 $"<b>{profitPlayer.SellPrice:0,0}</b> &#128176 \n"+
+                                 $"\n<u>Change:</u> <b>{(100 - profitPlayer.Percentage):0.00%}</b> &#8595 \n \n ";
+            string historyMessage = 
+                $" \n<u>Average:</u> <b>{avgPrice:0,0}</b>  &#128176 \n\n"+
+                $"&#9201 List of the last ten sales: (UTC±0:00) &#9201\n  \n";
+            List<SalesHistory> sales = lastSales.Take(10).ToList();
             
-           
-
-            string ProfiteMessage=$"<a href=\"{URL}{Card.FbId}\">{Card.ShortName} {Card.Version} "+
-                $"{Card.Raiting} {Card.Position}</a>" + 
-                $"\n \n<u>New price:</u> <b>{ProfitPlayer.Price.ToString("0,0")}</b> &#128176  \n<u>Profit:"+
-                $"</u><b>{ProfitPlayer.ProfitValue.ToString("0,0")}</b> &#128176  &#128200 \n<u>Old price:</u> "+
-                $"<b>{ProfitPlayer.SellPrice.ToString("0,0")}</b> &#128176 \n"+
-                $"\n<u>Change:</u> <b>{ProfitPlayer.Percentage.ToString("0.00%")}</b> &#9889 \n \n ";
-            string HistoryMessage = $" \n<u>Average:</u> <b>{avgPrice.ToString("0,0")}</b> &#128202 \n\n"+
-                $"&#9201 List of the last five sales: (UTC±0:00) &#9201\n  \n";
-            var sales = lastTenSales.Take(5).ToList();
-                 
-
-            foreach (var t in sales)
-            {
-             HistoryMessage=HistoryMessage+"<i>"+t.Price.ToString("0,0")+" in "+t.updated+" </i>\n";
-            }
-        
-
-
-            string Notification = ProfiteMessage+HistoryMessage;    
-            
-            return  Notification;
+            historyMessage = sales.Aggregate(historyMessage, (current, t) => current + "<i>" + t.Price.ToString("0,0") + " in " + t.updated + " </i>\n");
+            return profitMessage + historyMessage;    
         }
-
-        
     }
 }

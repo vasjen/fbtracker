@@ -1,7 +1,9 @@
+using fbtracker.Models;
+using fbtracker.Services.Interfaces;
 using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
 
-namespace fbtracker.Domain {
+namespace fbtracker.Services {
 public class SalesHistoryService : ISalesHistoryService{
       
      
@@ -16,7 +18,7 @@ public class SalesHistoryService : ISalesHistoryService{
          }
          catch (JsonException ex)
          {
-             System.Console.WriteLine(ex.Message);
+             Console.WriteLine(ex.Message);
              Console.WriteLine("Catch for {0}",fbDataId);
          }
          return this.Histories;
