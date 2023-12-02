@@ -8,6 +8,7 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="3.13.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0"/>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

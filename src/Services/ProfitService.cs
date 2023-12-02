@@ -10,19 +10,22 @@ namespace fbtracker.Services
         private readonly IPriceService _priceService;
         private readonly ITelegramService _tgbot;
         private readonly IServiceProvider _services;
+        private readonly INotificationService _discord;
         private  const double AFTER_TAX = 0.95;
         private  const double MIN_PROFIT = 500;
 
         public ProfitService(
             ISalesHistoryService history, 
             IPriceService priceService,
-            ITelegramService tgbot, 
+            ITelegramService tgbot,
+            INotificationService discord,
             IServiceProvider services)
         {
             _historyService = history;
             _priceService = priceService;
             _tgbot = tgbot;
             _services = services;
+            _discord = discord;
         }
         public async Task FindingProfitAsync (IAsyncEnumerable<Card> cards)
         {
@@ -108,6 +111,7 @@ namespace fbtracker.Services
                         };
                         Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
                         await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
+                        await _discord.SendMessage(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
                      // }
                 }
                 else

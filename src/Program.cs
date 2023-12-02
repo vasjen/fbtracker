@@ -1,3 +1,5 @@
+using Discord;
+using Discord.WebSocket;
 using fbtracker.Models;
 using fbtracker.Services;
 using fbtracker.Services.Interfaces;
@@ -32,6 +34,15 @@ internal class Program
                 services.AddTransient<IProfitService, ProfitService>();
                 services.AddTransient<ISalesHistoryService,SalesHistoryService>();
                 services.AddTransient<ITelegramService,TelegramService>();
+                services.AddTransient<INotificationService,DiscordService>();
+                services.AddSingleton<DiscordSocketClient>(p => 
+                {
+                    DiscordSocketClient client = new DiscordSocketClient();
+                    string? token = p.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
+                    client.LoginAsync(TokenType.Bot, token);
+                    client.StartAsync();
+                    return client;
+                });
                 
                 services.AddSingleton<ITelegramBotClient,TelegramBotClient>( p=>
                 {
