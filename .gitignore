@@ -435,6 +435,9 @@ test-results/
 # Icon must end with two \r
 Icon
 
+# Images
+*.png
+
 
 # Thumbnails
 ._*
@@ -482,3 +485,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Images folders 
+Cards/
+Promo/

@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
+using fbtracker.Models;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace fbtracker.Services{
     public static class Scraping{
@@ -39,5 +41,11 @@ namespace fbtracker.Services{
             string id = lastPart.Remove(lastPart.IndexOf('.'));
             return Int32.Parse(Regex.IsMatch(id, @"[^\d]") ? id.Remove(0, 1) : id);
         }
+        
+        public static Ps? GetPsPrices(string priceResponse)
+            =>  JsonConvert.DeserializeObject<Ps>(priceResponse);
+
+        public static Pc? GetPcPrices(string priceResponse)
+            =>  JsonConvert.DeserializeObject<Pc>(priceResponse);
     }
 }

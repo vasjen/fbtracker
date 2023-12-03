@@ -109,6 +109,7 @@ namespace fbtracker.Services {
                     ImageUrl = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original",""),
                     FbDataId = Scraping.GetFbdataIdFromUrl(Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original","")),
                     // PromoUrl = await GetBackgroundImage(URL +  $"/24/player/{link[nodesIndex++].GetAttributeValue("data-site-id", "")}", client)
+                    PcPrices = Scraping.
                 
                 };
             }
