@@ -102,12 +102,16 @@ namespace fbtracker.Services
                        // {
                             Console.WriteLine("\t => !!PROFIT!!!");
                             Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
+                            card.PromoUrl = await Scraping.GetBackgroundImage(Scraping.URL + "/player/" + card.FbId);
+                            string link = card.PromoUrl.Substring(card.PromoUrl.LastIndexOf('/') + 1);
+                            card.PromoUrlFile = link.Remove(link.IndexOf('?'));
+                            Console.WriteLine("Promo urlNameFile: {0} added to card", card.PromoUrlFile);
                             Profit newProfit = new() {
-                                CardId=card!.CardId,
-                                Price=currentPrice,
-                                SellPrice=nextPrice ,
-                                ProfitValue=profit,
-                                Percentage=(decimal)currentPrice/nextPrice   
+                                CardId = card!.CardId,
+                                Price = currentPrice,
+                                SellPrice = nextPrice ,
+                                ProfitValue = profit,
+                                Percentage = (decimal)currentPrice/nextPrice   
                         };
                         Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
                         await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);

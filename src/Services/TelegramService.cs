@@ -3,30 +3,59 @@ using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
+
 namespace fbtracker.Services {
     public class TelegramService : ITelegramService
     {
         private readonly ITelegramBotClient _client;
         private readonly string _chatId;
+        private readonly IImageService _imageService;
         private const string URL = "https://www.futbin.com/player/";
 
-        public TelegramService(ITelegramBotClient client, IConfiguration config) 
+        public TelegramService(ITelegramBotClient client, IConfiguration config, IImageService imageService) 
         {
             _client = client;
-            _chatId = config.GetSection("Telegram").GetValue<string>("ChatId"); 
+            _chatId = config.GetSection("Telegram").GetValue<string>("ChatId");
+            _imageService = imageService;
+
         }
 
        
         public async Task SendInfo(Profit profitPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card card)
         {
+            
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "User Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)");
+            try
+            {
+                _imageService.DownloadImageAsync("Cards",$"{card.FbDataId}.png",new Uri(card.ImageUrl)).GetAwaiter().GetResult();
+                _imageService.DownloadImageAsync("Promo",$"{card.PromoUrlFile}",new Uri(card.PromoUrl)).GetAwaiter().GetResult();
+                await _imageService.CombineImages("Cards/" + $"{card.FbDataId}.png","Promo/" + $"{card.PromoUrlFile}",$"{card.FbDataId}.png");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+           
             string notification = await CreateNotificationAsync(profitPlayer, avgPrice, lastTenSales, card);
+            
+            
+            
+            await using FileStream imageStream = File.OpenRead($"{card.FbDataId}.png");
+            
             await _client.SendTextMessageAsync(
                 _chatId, notification, 
                 ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
+            await _client.SendPhotoAsync(
+                _chatId,new InputOnlineFile(imageStream, "result.jpg"), notification, 
+                ParseMode.Html ,allowSendingWithoutReply: true );
         }
 
          async Task<string> CreateNotificationAsync(Profit profitPlayer, int avgPrice, IEnumerable<SalesHistory> lastSales, Card card)
          { 
+             
              string profitMessage = 
                                  $"<a href=\"{URL}{card.FbId}\">{card.ShortName} {card.Version} "+
                                  $"{card.Rating} {card.Position}</a>" + 
