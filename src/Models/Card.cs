@@ -13,8 +13,7 @@ namespace fbtracker.Models
         public string Version {get;set;} = string.Empty;
         public string Position {get;set;} = string.Empty;
         
-        public Pc? PcPrices { get; set; }
-        public Ps? PsPrices {get;set;}
+        public Prices Prices {get;set;}
         public string PromoUrlFile {get;set;} = string.Empty;
         
         public string PromoUrl {get;set;} = string.Empty;

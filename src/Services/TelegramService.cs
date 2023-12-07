@@ -45,9 +45,9 @@ namespace fbtracker.Services {
             
             await using FileStream imageStream = File.OpenRead($"{card.FbDataId}.png");
             
-            await _client.SendTextMessageAsync(
-                _chatId, notification, 
-                ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
+            // await _client.SendTextMessageAsync(
+                // _chatId, notification, 
+                // ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
             await _client.SendPhotoAsync(
                 _chatId,new InputOnlineFile(imageStream, "result.jpg"), notification, 
                 ParseMode.Html ,allowSendingWithoutReply: true );
@@ -60,16 +60,16 @@ namespace fbtracker.Services {
                                  $"<a href=\"{URL}{card.FbId}\">{card.ShortName} {card.Version} "+
                                  $"{card.Rating} {card.Position}</a>" + 
                                  $"\n \n<u>New price:</u> <b>{profitPlayer.Price:0,0}</b> &#128176  \n<u>Profit:"+
-                                 $"</u><b>{profitPlayer.ProfitValue:0,0}</b> &#128200 \n<u>Old price:</u> "+
-                                 $"<b>{profitPlayer.SellPrice:0,0}</b> &#128176 \n"+
-                                 $"\n<u>Change:</u> <b>- {1 - (profitPlayer.Percentage):0.00%}</b> &#128315 \n \n ";
+                                 $"</u><b>{profitPlayer.ProfitValue:0,0}</b> &#128200 \n"+
+                                 $"\n<u>Change:</u> <b>- {1 - (profitPlayer.Percentage):0.00%}</b> &#128315 \n" +
+                                 $"<u>Updated:</u> <b>{card.Prices.Ps.Updated}</b>\n \n ";
             string historyMessage = 
                 $" \n<u>Average:</u> <b>{avgPrice:0,0}</b>  &#128176 \n\n"+
-                $"&#9201 List of the last ten sales: (UTC±0:00) &#9201\n  \n";
+                $"Last ten sales: (UTC±0:00) &#9201\n  \n<pre>";
             List<SalesHistory> sales = lastSales.Take(10).ToList();
             
             historyMessage = sales.Aggregate(historyMessage, (current, t) => current + "<i>" + t.Price.ToString("0,0") + " in " + t.updated + " </i>\n");
-            return profitMessage + historyMessage;    
+            return profitMessage + historyMessage + "\n</pre>";    
         }
     }
 }
