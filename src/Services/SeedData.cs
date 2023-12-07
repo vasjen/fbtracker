@@ -1,10 +1,13 @@
-﻿using fbtracker.Models;
+﻿using System.Text.RegularExpressions;
+using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 using HtmlAgilityPack;
 
 namespace fbtracker.Services {
 
-    public static class SeedData {
+    public static class SeedData
+    {
+        
 
         public static async IAsyncEnumerable<Card> EnsurePopulatedAsync(IHost host) {
             
@@ -36,7 +39,9 @@ namespace fbtracker.Services {
                             $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client);
                         await foreach (Card item in cards)
                         {
-                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}",item.ShortName,item.Version, item.Position, item.Rating);
+                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}, FbId {4}, FbDataId {5}",item.ShortName,item.Version, item.Position, item.Rating, item.FbId, item.FbDataId);
+                            // Console.WriteLine("Player page: {0}", URL + $"/player/{item.FbId}");
+                            Console.WriteLine("---------------------------------------------------\n");
                             yield return item;
                         }
                     }
@@ -85,8 +90,7 @@ namespace fbtracker.Services {
             doc.LoadHtml(page);
             int nodesIndex = 0;
             HtmlNodeCollection? link = doc.DocumentNode.SelectNodes("//a[@class='player_name_players_table get-tp']");
-            // HtmlNodeCollection? img = doc.DocumentNode.SelectNodes("//img[@class='player_img player_right_curve lazy-main-player form rating ut24 icon gold rare']");
-            // Console.WriteLine("Count of images: {0}", img.Count);
+           
             for (int i = 1; i <= 61; i += 2)
             {
                 if (i == 21 || i == 42)
@@ -97,20 +101,24 @@ namespace fbtracker.Services {
                 yield return new Card()
                 {
                     FbId = Int32.Parse(link[nodesIndex++].GetAttributeValue("data-site-id", "")),
-                    ShortName = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[2]/div[1]/a"),
-                    Rating = Int32.Parse( ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[3]/span")),
-                    Position = ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[4]/div[1]"),
-                    Version = ParseFromDoc(doc,
-                        $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]"),
-                    // FbDataId = img.Count
+                    ShortName = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[2]/div[1]/a").InnerText,
+                    Rating = Int32.Parse( Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[3]/span").InnerText),
+                    Position = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[4]/div[1]").InnerText,
+                    Version = Scraping.ParseFromDoc(doc,
+                        $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]").InnerText,
+                    ImageUrl = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original",""),
+                    // FbDataId = Scraping.GetFbdataIdFromUrl(Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original","")),
+                    // PromoUrl = await GetBackgroundImage(URL +  $"/24/player/{link[nodesIndex++].GetAttributeValue("data-site-id", "")}", client)
+                    
                 
                 };
             }
         }
-        private static string ParseFromDoc(HtmlDocument page,string xPath)
-            =>  page.DocumentNode
-                .SelectSingleNode(xPath)
-                .InnerText;
+        
+
+        
+        
+        
     }
     
 }

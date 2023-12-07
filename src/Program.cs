@@ -35,6 +35,7 @@ internal class Program
                 services.AddTransient<ISalesHistoryService,SalesHistoryService>();
                 services.AddTransient<ITelegramService,TelegramService>();
                 services.AddTransient<INotificationService,DiscordService>();
+                services.AddTransient<IImageService,ImageService>();
                 services.AddSingleton<DiscordSocketClient>(p => 
                 {
                     DiscordSocketClient client = new DiscordSocketClient();

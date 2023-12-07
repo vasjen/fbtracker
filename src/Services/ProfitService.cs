@@ -12,7 +12,7 @@ namespace fbtracker.Services
         private readonly IServiceProvider _services;
         private readonly INotificationService _discord;
         private  const double AFTER_TAX = 0.95;
-        private  const double MIN_PROFIT = 500;
+        private  const double MIN_PROFIT = 1000;
 
         public ProfitService(
             ISalesHistoryService history, 
@@ -77,45 +77,48 @@ namespace fbtracker.Services
         private async Task CheckProfitAsync(Card card, HttpClient client)
         {
             await Task.Delay(1000);
-            int[] prices = await _priceService.GetPriceAsync(card.FbDataId, client);
-            int currentPrice = prices[0];
-            int nextPrice = prices[1];
-            Console.WriteLine($"Check  id: {card.FbDataId}, CurrentPrice: {currentPrice}, NextPrice: {nextPrice } \n");
-            if (nextPrice != 0 && currentPrice != 0)
+            await _priceService.GetPriceAsync(card, client);
+            if (card.Prices.Ps.LCPrice2 != 0 && card.Prices.Ps.LCPrice != 0)
             {   
-            int profit = (int)(nextPrice * AFTER_TAX - currentPrice);
-                if (profit > 0 && profit >= MIN_PROFIT){  
-                    
-                    IEnumerable<SalesHistory>? history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
-                    if (history is null)
-                    {
-                        Console.WriteLine($"History is null or incorrect for {card.ShortName}");
-                        return;
-                    }
-
-                    IEnumerable<SalesHistory>? lastSales = history?
-                             .Where(p => p.status.Contains("closed"))
-                             .Take(20);
+                IEnumerable<SalesHistory>? history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
+                IEnumerable<SalesHistory>? lastSales = history?
+                    .Where(p => p.status.Contains("closed"))
+                    .Where(p => Math.Abs(card.Prices.Ps.Average - p.Price) <= (card.Prices.Ps.Average * 0.15))
+                    .Take(10);
                              
-                    double avgPrice=(lastSales!.Average(p => p.Price));
-                       // if (NextPrice <= avgPrice)  
-                       // {
-                            Console.WriteLine("\t => !!PROFIT!!!");
-                            Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
-                            Profit newProfit = new() {
-                                CardId=card!.CardId,
-                                Price=currentPrice,
-                                SellPrice=nextPrice ,
-                                ProfitValue=profit,
-                                Percentage=(decimal)currentPrice/nextPrice   
-                        };
-                        Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
-                        await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
-                        await _discord.SendMessage(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
-                     // }
+                double avgPrice=(lastSales!.Average(p => p.Price));
+                if (history is null)
+                {
+                    Console.WriteLine($"History is null or incorrect for {card.ShortName}");
+                    return;
+                }
+                Console.WriteLine($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
+                Console.WriteLine($"Average by history: {avgPrice}. Difference profit: {avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice}  ");
+           
+                int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);
+                if (profit > 0 && profit >= MIN_PROFIT)
+                {
+                    Console.WriteLine("\t => !!PROFIT!!!");
+                    Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
+                    card.PromoUrl = await Scraping.GetBackgroundImage(Scraping.URL + "/player/" + card.FbId);
+                    string link = card.PromoUrl.Substring(card.PromoUrl.LastIndexOf('/') + 1);
+                    card.PromoUrlFile = link.Remove(link.IndexOf('?'));
+                    Console.WriteLine("Promo urlNameFile: {0} added to card", card.PromoUrlFile);
+                    Profit newProfit = new() 
+                    { 
+                        CardId = card!.CardId, 
+                        Price = card.Prices.Ps.LCPrice, 
+                        SellPrice = card.Prices.Ps.LCPrice2 , 
+                        ProfitValue = profit, 
+                        Percentage = (decimal)card.Prices.Ps.LCPrice / (decimal)avgPrice   
+                    };
+                    Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
+                    await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
+                    await _discord.SendMessage(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
+                    
                 }
                 else
-               Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
+                    Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
             }
         }
      }
