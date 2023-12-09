@@ -1,4 +1,6 @@
-using System.Drawing;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using fbtracker.Services.Interfaces;
 
 namespace fbtracker.Services;
@@ -28,18 +30,21 @@ public class ImageService : IImageService
     {
         if (!File.Exists(outputFilePath))
         {
-            
-            using (var fg = Image.FromFile(firstFilePath))
+            using (var fg = Image.Load(firstFilePath))
             {
-                using (var bg = Image.FromFile(secondFilePath))
+                using (var bg = Image.Load(secondFilePath))
                 {
-                    
-                    Graphics myGraphic = Graphics.FromImage(bg);
-                    Rectangle rect = new((bg.Width - fg.Width) / 2, (bg.Height - fg.Height) / 2, fg.Width, fg.Height);
-                    myGraphic.DrawImage(fg, rect);
-                    MemoryStream output = new System.IO.MemoryStream();
-                    bg.Save(output, System.Drawing.Imaging.ImageFormat.Png);
-                    await File.WriteAllBytesAsync(outputFilePath, output.ToArray());
+                    bg.Mutate(ctx =>
+                    {
+                        // var rect = new Rectangle((bg.Width - fg.Width) / 2, (bg.Height - fg.Height) / 2, fg.Width, fg.Height);
+                        bg.Mutate(o => o.DrawImage(fg,new SixLabors.ImageSharp.Point((bg.Width - fg.Width) / 2, (bg.Height - fg.Height) / 2), 1f));
+                        // ctx.DrawImage(fg, rect, 1f);
+                    });
+
+                    using (var output = new FileStream(outputFilePath, FileMode.Create))
+                    {
+                        await bg.SaveAsync(output, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+                    }
                 }
             }
         }

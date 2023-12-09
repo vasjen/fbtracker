@@ -72,17 +72,14 @@ namespace fbtracker.Services {
         private static async IAsyncEnumerable<Card> GetCards(string url, HttpClient client)
         {
             string page = String.Empty;
-            string ip = await client.GetStringAsync("http://api.ipify.org/");
             try
             {
                 page = await client.GetStringAsync(url);
-                Console.WriteLine("Success from ip: {0}",ip);
-
+                
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Console.WriteLine("Error from ip: {0}",ip);
                 yield break;
             }
             
@@ -107,8 +104,7 @@ namespace fbtracker.Services {
                     Version = Scraping.ParseFromDoc(doc,
                         $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]").InnerText,
                     ImageUrl = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original",""),
-                    // FbDataId = Scraping.GetFbdataIdFromUrl(Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original","")),
-                    // PromoUrl = await GetBackgroundImage(URL +  $"/24/player/{link[nodesIndex++].GetAttributeValue("data-site-id", "")}", client)
+                   
                     
                 
                 };
