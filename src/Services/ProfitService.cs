@@ -96,7 +96,7 @@ namespace fbtracker.Services
                 Console.WriteLine($"Average by history: {avgPrice}. Difference profit: {avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice}  ");
            
                 int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);
-                if (profit > 0 && profit >= MIN_PROFIT)
+                if (profit > 0 && profit >= MIN_PROFIT && card.Prices.Ps.LCPrice2 * AFTER_TAX > card.Prices.Ps.LCPrice)
                 {
                     Console.WriteLine("\t => !!PROFIT!!!");
                     Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
