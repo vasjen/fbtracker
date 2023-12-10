@@ -45,10 +45,7 @@ namespace fbtracker.Services {
             
             await using FileStream imageStream = File.OpenRead($"{card.FbDataId}.png");
             
-            // await _client.SendTextMessageAsync(
-                // _chatId, notification, 
-                // ParseMode.Html ,disableWebPagePreview: true,  allowSendingWithoutReply: true );
-            await _client.SendPhotoAsync(
+           await _client.SendPhotoAsync(
                 _chatId,new InputOnlineFile(imageStream, "result.jpg"), notification, 
                 ParseMode.Html ,allowSendingWithoutReply: true );
         }

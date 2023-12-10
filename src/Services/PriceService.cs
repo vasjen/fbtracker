@@ -22,7 +22,6 @@ namespace fbtracker.Services
                     {
                         string jsonResponse = await response.Content.ReadAsStringAsync();
                         card.Prices = Scraping.GetPrices(card.FbDataId,jsonResponse);
-
                     }
                     catch (Exception ex) 
                     { 

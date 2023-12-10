@@ -34,12 +34,11 @@ public class ImageService : IImageService
             {
                 using (var bg = Image.Load(secondFilePath))
                 {
-                    bg.Mutate(ctx =>
-                    {
+                    
                         // var rect = new Rectangle((bg.Width - fg.Width) / 2, (bg.Height - fg.Height) / 2, fg.Width, fg.Height);
                         bg.Mutate(o => o.DrawImage(fg,new SixLabors.ImageSharp.Point((bg.Width - fg.Width) / 2, (bg.Height - fg.Height) / 2), 1f));
                         // ctx.DrawImage(fg, rect, 1f);
-                    });
+                 
 
                     using (var output = new FileStream(outputFilePath, FileMode.Create))
                     {

@@ -48,7 +48,7 @@ namespace fbtracker.Services{
             {
                 if (result.Result[i].Contains("data-player-resource")){
                     string id = result.Result[i].Remove(result.Result[i].LastIndexOf('"')).Substring(result.Result[i].LastIndexOf("=\"")+2);
-                    card.FbDataId=int.Parse(id);
+                    card.FbDataId = int.Parse(id);
                     fbdataid =  int.Parse(id);
                 }
             }
@@ -76,7 +76,7 @@ namespace fbtracker.Services{
             ps.PRP = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["PRP"].GetValue<string>());
             ps.LCPClosing = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPClosing"].GetValue<int>();
             
-            Pc pc = new();
+            Pc pc = new(); // Add in some feature updates PC support
             return new Prices( ps, pc );
         }
         private static int ConvertPriceToInt(string price)

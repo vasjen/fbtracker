@@ -47,10 +47,10 @@ namespace fbtracker.Services
                     new ParallelOptions { MaxDegreeOfParallelism = clients.Count }, async p =>
                     {
                         if (p.FbDataId == 0)
-                            p.FbDataId = GetDataId(p, getNextClient());
+                            p.FbDataId = Scraping.GetDataId(p, getNextClient());
                         try
                         {
-                            var client = getNextClient();
+                            HttpClient client = getNextClient();
                             CheckProfitAsync(p, client).Wait();
                         }
                         catch (Exception ex) { 
@@ -60,20 +60,7 @@ namespace fbtracker.Services
                     });
              }
          }
-        private int GetDataId(Card card, HttpClient client)
-        {
-            Task<string[]>? result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{card.FbId}");
-            int fbdataid = 0;
-            for (int i = 0; i < result.Result.Length; i++)
-            {
-                if (result.Result[i].Contains("data-player-resource")){
-                    string id = result.Result[i].Remove(result.Result[i].LastIndexOf('"')).Substring(result.Result[i].LastIndexOf("=\"")+2);
-                    card.FbDataId=int.Parse(id);
-                    fbdataid =  int.Parse(id);
-                }
-            }
-            return fbdataid;
-        }
+      
         private async Task CheckProfitAsync(Card card, HttpClient client)
         {
             await Task.Delay(1000);

@@ -19,7 +19,6 @@ namespace fbtracker.Services {
                         .GetRequiredService<IWebService>();
                 List<HttpClient> clients =
                     webService.CreateHttpClients( webService.CreateHandlers( webService.GetProxyList())).GetAwaiter().GetResult();
-                Console.WriteLine("Count of clients: {0} in SeedData", clients.Count);
                 int currentIndex = 0;
 
                 HttpClient getNextClient()
@@ -39,9 +38,8 @@ namespace fbtracker.Services {
                             $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client);
                         await foreach (Card item in cards)
                         {
-                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}, FbId {4}, FbDataId {5}",item.ShortName,item.Version, item.Position, item.Rating, item.FbId, item.FbDataId);
-                            // Console.WriteLine("Player page: {0}", URL + $"/player/{item.FbId}");
-                            Console.WriteLine("---------------------------------------------------\n");
+                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}, FbId {4}",item.ShortName,item.Version, item.Position, item.Rating, item.FbId);
+                            Console.WriteLine($"{'-',50}");
                             yield return item;
                         }
                     }
@@ -104,17 +102,9 @@ namespace fbtracker.Services {
                     Version = Scraping.ParseFromDoc(doc,
                         $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[5]/div[1]").InnerText,
                     ImageUrl = Scraping.ParseFromDoc(doc, $"//*[@id=\"repTb\"]/tbody/tr[{i}]/td[2]/div[1]/img").GetAttributeValue("data-original",""),
-                   
-                    
-                
                 };
             }
         }
-        
-
-        
-        
-        
     }
     
 }
