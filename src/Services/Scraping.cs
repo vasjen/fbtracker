@@ -54,31 +54,47 @@ namespace fbtracker.Services{
             }
             return fbdataid;
         }
-        public static int GetFbdataIdFromUrl(string url)
-        {
-            string lastPart = url.Substring(url.LastIndexOf('/') + 1);
-            string id = lastPart.Remove(lastPart.IndexOf('.'));
-            return Int32.Parse(Regex.IsMatch(id, @"[^\d]") ? id.Remove(0, 1) : id);
-        }
 
         public static Prices GetPrices(int fbDataId,string jsonPrice)
+            =>  new (
+                    GetPrice(fbDataId, jsonPrice,"ps") as Ps, 
+                    GetPrice(fbDataId, jsonPrice, "pc") as Pc
+                );
+        
+
+        private static BasePrice GetPrice(int fbDataId, string jsonPrice, string typePrice)
         {
-            JsonNode jsonNod = JsonNode.Parse(jsonPrice);
-            Ps ps = new();
-            ps.LCPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice"].GetValue<string>());
-            ps.LCPrice2 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice3 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice4 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice5 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.Updated = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["updated"].GetValue<string>();
-            ps.MinPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["MinPrice"].GetValue<string>());
-            ps.MinPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["MaxPrice"].GetValue<string>());
-            ps.PRP = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["PRP"].GetValue<string>());
-            ps.LCPClosing = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPClosing"].GetValue<int>();
             
-            Pc pc = new(); // Add in some feature updates PC support
-            return new Prices( ps, pc );
+            if (typePrice != "ps" && typePrice != "pc")
+                throw new ArgumentException("Type price must be ps or pc");
+            
+            JsonNode jsonNod = JsonNode.Parse(jsonPrice);
+            BasePrice price = typePrice switch
+            {
+                "ps" => new Ps(),
+                "pc" => new Pc(),
+            };
+            price.LCPrice =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPrice"].GetValue<string>());
+            price.LCPrice2 =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPrice2"].GetValue<string>());
+            price.LCPrice3 =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPrice2"].GetValue<string>());
+            price.LCPrice4 =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPrice2"].GetValue<string>());
+            price.LCPrice5 =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPrice2"].GetValue<string>());
+            price.Updated = jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["updated"].GetValue<string>();
+            price.MinPrice =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["MinPrice"].GetValue<string>());
+            price.MaxPrice =
+                ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["MaxPrice"].GetValue<string>());
+            price.PRP = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["PRP"].GetValue<string>());
+            price.LCPClosing = jsonNod[$"{fbDataId}"]!["prices"][$"{typePrice}"]!["LCPClosing"].GetValue<int>();
+            
+            return price;
         }
+        
         private static int ConvertPriceToInt(string price)
             => Int32.Parse(price.Replace(",", ""));
 
