@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 
@@ -11,6 +12,7 @@ namespace fbtracker.Services
         private readonly ITelegramService _tgbot;
         private readonly IServiceProvider _services;
         private readonly INotificationService _discord;
+        private readonly ILogger<ProfitService> _logger;
         private  const double AFTER_TAX = 0.95;
         private  const double MIN_PROFIT = 1000;
 
@@ -19,16 +21,19 @@ namespace fbtracker.Services
             IPriceService priceService,
             ITelegramService tgbot,
             INotificationService discord,
-            IServiceProvider services)
+            IServiceProvider services,
+            ILogger<ProfitService> logger)
         {
             _historyService = history;
             _priceService = priceService;
             _tgbot = tgbot;
             _services = services;
             _discord = discord;
+            _logger = logger;
         }
         public async Task FindingProfitAsync (IAsyncEnumerable<Card> cards)
         {
+            Stopwatch timer = new();
              using (IServiceScope scope = _services.CreateScope())
              {
                  IWebService webService = 
@@ -36,13 +41,14 @@ namespace fbtracker.Services
                          .GetRequiredService<IWebService>();
                 List<HttpClient> clients = await  webService.CreateHttpClients(webService.CreateHandlers(webService.GetProxyList()));
                 int currentIndex = 0;
-                Console.WriteLine("Count of clients: {0} in ProfitService", clients.Count);
+                _logger.LogInformation("Count of clients: {0} in ProfitService", clients.Count);
                 HttpClient getNextClient()
                 {
                     HttpClient client = clients[currentIndex];
                     currentIndex = (currentIndex + 1) % clients.Count;
                     return client;
                 }
+                timer.Start();
                 Parallel.ForEach(await cards.ToListAsync(),
                     new ParallelOptions { MaxDegreeOfParallelism = clients.Count }, async p =>
                     {
@@ -54,11 +60,12 @@ namespace fbtracker.Services
                             CheckProfitAsync(p, client).Wait();
                         }
                         catch (Exception ex) { 
-                            Console.WriteLine(ex.Message);
-                            Console.WriteLine($"Error with {p.FbDataId}");
+                            _logger.LogError(ex.Message);
+                            _logger.LogError($"Error with {p.ToString()}");
                         }
                     });
              }
+             _logger.LogInformation("Total time checking price for all cards: {0}", timer.Elapsed);
          }
       
         private async Task CheckProfitAsync(Card card, HttpClient client)
@@ -76,21 +83,21 @@ namespace fbtracker.Services
                 double avgPrice=(lastSales!.Average(p => p.Price));
                 if (history is null)
                 {
-                    Console.WriteLine($"History is null or incorrect for {card.ShortName}");
+                    _logger.LogInformation($"History is null or incorrect for {card.ShortName}");
                     return;
                 }
-                Console.WriteLine($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
-                Console.WriteLine($"Average by history: {avgPrice}. Difference profit: {avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice}  ");
+                _logger.LogInformation($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
+                _logger.LogInformation($"Average by history: {avgPrice}. Difference profit: {avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice}  ");
            
                 int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);
                 if (profit > 0 && profit >= MIN_PROFIT && card.Prices.Ps.LCPrice2 * AFTER_TAX > card.Prices.Ps.LCPrice)
                 {
-                    Console.WriteLine("\t => !!PROFIT!!!");
-                    Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
+                    _logger.LogInformation("\t => !!PROFIT!!!");
+                    _logger.LogInformation($"{card}");
                     card.PromoUrl = await Scraping.GetBackgroundImage(Scraping.URL + "/player/" + card.FbId);
                     string link = card.PromoUrl.Substring(card.PromoUrl.LastIndexOf('/') + 1);
                     card.PromoUrlFile = link.Remove(link.IndexOf('?'));
-                    Console.WriteLine("Promo urlNameFile: {0} added to card", card.PromoUrlFile);
+                    _logger.LogInformation("Promo urlNameFile: {0} added to card", card.PromoUrlFile);
                     Profit newProfit = new() 
                     { 
                         CardId = card!.CardId, 
@@ -99,13 +106,11 @@ namespace fbtracker.Services
                         ProfitValue = profit, 
                         Percentage = (decimal)card.Prices.Ps.LCPrice / (decimal)avgPrice   
                     };
-                    Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
+                    _logger.LogInformation($"Profit: {profit} for {card}");
                     await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
                     await _discord.SendMessage(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
                     
                 }
-                else
-                    Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
             }
         }
      }

@@ -11,14 +11,15 @@ namespace fbtracker.Services {
         private readonly ITelegramBotClient _client;
         private readonly string _chatId;
         private readonly IImageService _imageService;
+        private readonly ILogger<TelegramService> _logger;
         private const string URL = "https://www.futbin.com/player/";
 
-        public TelegramService(ITelegramBotClient client, IConfiguration config, IImageService imageService) 
+        public TelegramService(ITelegramBotClient client, IConfiguration config, IImageService imageService, ILogger<TelegramService> logger) 
         {
             _client = client;
             _chatId = config.GetSection("Telegram").GetValue<string>("ChatId");
             _imageService = imageService;
-
+            _logger = logger;
         }
 
        
@@ -35,8 +36,7 @@ namespace fbtracker.Services {
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                throw;
+                _logger.LogError(e.Message);
             }
            
             string notification = await CreateNotificationAsync(profitPlayer, avgPrice, lastTenSales, card);

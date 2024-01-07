@@ -1,18 +1,24 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 using HtmlAgilityPack;
 
 namespace fbtracker.Services {
 
-    public static class SeedData
+    public class SeedData
     {
-        
+        private readonly ILogger<SeedData> _logger;
 
-        public static async IAsyncEnumerable<Card> EnsurePopulatedAsync(IHost host) {
+        public SeedData(ILogger<SeedData> logger)
+        {
+            _logger = logger;
+        }
+
+        public async IAsyncEnumerable<Card> EnsurePopulatedAsync(IServiceProvider services) {
             
            
-            using (IServiceScope scope = host.Services.CreateScope())
+            using (IServiceScope scope = services.CreateScope())
             {
                 IWebService webService =
                     scope.ServiceProvider
@@ -29,20 +35,22 @@ namespace fbtracker.Services {
                     currentIndex = (currentIndex + 1) % clients.Count;
                     return client;
                 }
-                
+
+                Stopwatch timer = new();
+                timer.Start();
                     int numbers = await GetMaxNumberPage("https://www.futbin.com/players?player_rating=80-99&ps_price=10000-15000000");
                     for (int i = 1; i <= numbers; i++)
                     {
                         HttpClient client = getNextClient();
                         IAsyncEnumerable<Card> cards =  GetCards(
-                            $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client);
+                            $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client, _logger);
                         await foreach (Card item in cards)
                         {
-                            Console.WriteLine("Name: {0}, Version: {1}, Position: {2}, Rating {3}, FbId {4}",item.ShortName,item.Version, item.Position, item.Rating, item.FbId);
-                            Console.WriteLine($"{'-',50}");
+                            _logger.LogInformation(item.ToString());
                             yield return item;
                         }
                     }
+                    _logger.LogInformation("Total time getting all cards: {0}", timer.Elapsed);
             }
         }
 
@@ -60,24 +68,21 @@ namespace fbtracker.Services {
                     string numberString = result[i];
                     maxPage= int.Parse(numberString.Remove(numberString.IndexOf("</a")).Substring(numberString.IndexOf("\">")+2));
                     break;
-                    
                 }
             }
-            Console.WriteLine("Max page is {0}", maxPage);
             return maxPage;
         }
 
-        private static async IAsyncEnumerable<Card> GetCards(string url, HttpClient client)
+        private static async IAsyncEnumerable<Card> GetCards(string url, HttpClient client, ILogger logger)
         {
             string page = String.Empty;
             try
             {
                 page = await client.GetStringAsync(url);
-                
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                logger.LogError(e.Message);
                 yield break;
             }
             

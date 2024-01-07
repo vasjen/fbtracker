@@ -19,7 +19,7 @@ public class WebService : IWebService
         string jsonData = @"{
             ""type"": ""ipv4"",
             ""page"": 1,
-            ""page_size"": 10,
+            ""page_size"": 100,
             ""sort"": 1
         }";
         StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
@@ -76,7 +76,6 @@ public class WebService : IWebService
         };
         HttpClient client = new HttpClient(handler: handler, disposeHandler: true);
         HttpResponseMessage response = await client.GetAsync("https://futbin.com/");
-        Console.WriteLine("For proxy {0} status code is {1}", proxy.Address, response.StatusCode);
         return response.IsSuccessStatusCode;
     }
     

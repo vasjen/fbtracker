@@ -31,6 +31,7 @@ internal class Program
                     
                 });
                 services.AddTransient<IPriceService, PriceService>();
+                services.AddScoped<SeedData>();
                 services.AddTransient<IProfitService, ProfitService>();
                 services.AddTransient<ISalesHistoryService,SalesHistoryService>();
                 services.AddTransient<ITelegramService,TelegramService>();
@@ -50,26 +51,14 @@ internal class Program
                     string? token = p.GetService<IConfiguration>().GetValue<string>("Telegram:Token");
                     return new TelegramBotClient(token: token);
                 });
-            
+                services.AddHostedService<PriceCheckerBackground>();
+                services.AddLogging(p =>
+                {
+                    p.AddConsole();
+                });
        })
         .Build();
-       
-       
-       IProfitService profitService = host.Services.GetRequiredService<IProfitService>();
-       
-          while (true)
-          {
-              try
-              {
-                IAsyncEnumerable<Card> cards =  SeedData.EnsurePopulatedAsync(host);
-                profitService.FindingProfitAsync(cards).GetAwaiter().GetResult();
-              }
-              catch (Exception e)
-              {
-                  Console.WriteLine(e.Message);
-                  break;
-              }
-          }
+        await host.RunAsync();
     }
     
 }

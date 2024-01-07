@@ -19,5 +19,10 @@ namespace fbtracker.Models
         public string PromoUrl {get;set;} = string.Empty;
         public string ImageUrl {get;set;} = string.Empty;
         public List<Profit> Profits {get;set;}
+        public override string? ToString()
+        {
+            return $"{this.ShortName}: {this.Version} {this.Rating} {this.Position} with FbId: {this.FbId} and FbDataId: {this.FbDataId}";
+        }
     }
+    
 }
