@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.8'
 services:
   app:
     build:
@@ -6,8 +6,6 @@ services:
       dockerfile: ./dockerfile
     ports:
       - 9000:80
-#    depends_on:
-#      - postgres
     volumes:
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     restart: unless-stopped
@@ -17,29 +15,31 @@ services:
       - mynetwork
     container_name: app
 
-#  postgres:
-#    image: postgres:latest
-#    container_name: postgres
-#    restart: unless-stopped
-#    ports:
-#      - '5435:5432'
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=Pass44w0rd
-#      - POSTGRES_DB=Card
-#    command:
-#      - "postgres"
-#      - "-c"
-#      - "wal_level=logical"
-#      - "-c"
-#      - "max_prepared_transactions=10"
-#    volumes:
-#      - postgres-data:/var/lib/postgresql/data
-#    networks:
-#      - mynetwork
+  loki:
+    image: "grafana/loki:latest"
+    hostname: logs
+    volumes:
+      - loki:/loki
+    ports:
+      - "3100:3100" # http and Grafana data source
+
+  grafana:
+    image: grafana/grafana-oss:latest-ubuntu
+    hostname: grafana
+    ports: 
+      - "3000:3000" #UI
+    volumes:
+      - grafana:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    depends_on:
+      - loki
 
 networks:
   mynetwork:
 
-#volumes:
-#  postgres-data:
+volumes:
+  grafana: ~
+  loki: ~
