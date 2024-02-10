@@ -1,9 +1,8 @@
-using fbtracker.Models;
+﻿using fbtracker.Models;
 
-namespace fbtracker.Services.Interfaces
+namespace fbtracker.Services.Interfaces;
+
+public interface IProfitService
 {
-    public interface IProfitService
-    {
-        public  Task FindingProfitAsync (IAsyncEnumerable<Card> Cards);
-    }
+    public Task FindProfitCards (IAsyncEnumerable<Card> cards);
 }

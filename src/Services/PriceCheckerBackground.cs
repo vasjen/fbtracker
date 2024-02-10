@@ -22,17 +22,16 @@ public class PriceCheckerBackground : BackgroundWorkerService
     protected override async Task DoWork(CancellationToken cancellationToken)
     {
         
-        _logger.LogInformation(
-            "PriceCheckerBackground Hosted Service is working.");
+      
         using (IServiceScope scope = this._services.CreateScope())
         {
             _logger.LogInformation("PriceCheckerBackground Hosted Service is working. Started at {0}", DateTime.Now); 
             Stopwatch timer = new();
             timer.Start();
-            SeedData seedData = scope.ServiceProvider.GetService<SeedData>();
+            SeedData? seedData = scope.ServiceProvider.GetService<SeedData>();
             IAsyncEnumerable<Card> cards =  seedData.EnsurePopulatedAsync(_services);
             IProfitService profitService = scope.ServiceProvider.GetService<IProfitService>();
-            await profitService.FindingProfitAsync(cards);
+            await profitService.FindProfitCards(cards);
         
             _logger.LogInformation(
                 "PriceCheckerBackground Hosted Service is finished at {0}.\n Total time: {1}", DateTime.Now, timer.Elapsed);

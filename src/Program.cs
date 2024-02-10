@@ -29,21 +29,21 @@ internal class Program
             options.BaseAddress = new Uri(configuration.GetValue<string>("Proxy:Service") + apikey) ?? throw new ArgumentNullException(nameof(options.BaseAddress));
                     
         });
-        builder.Services.AddTransient<IPriceService, PriceService>();
+        builder.Services.AddTransient<IGetingCardData, GetingCardData>();
         builder.Services.AddScoped<SeedData>();
         builder.Services.AddTransient<IProfitService, ProfitService>();
         builder.Services.AddTransient<ISalesHistoryService,SalesHistoryService>();
-        builder.Services.AddTransient<ITelegramService,TelegramService>();
-        builder.Services.AddTransient<INotificationService,DiscordService>();
+        builder.Services.AddTransient<INotificationService,TelegramService>();
+        // builder.Services.AddTransient<INotificationService,DiscordService>();
         builder.Services.AddTransient<IImageService,ImageService>();
-        builder.Services.AddSingleton<DiscordSocketClient>(p => 
-        {
-            DiscordSocketClient client = new DiscordSocketClient();
-            string? token = p.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
-            client.LoginAsync(TokenType.Bot, token);
-            client.StartAsync();
-            return client;
-        });
+        // builder.Services.AddSingleton<DiscordSocketClient>(p => 
+        // {
+            // DiscordSocketClient client = new DiscordSocketClient();
+            // string? token = p.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
+            // client.LoginAsync(TokenType.Bot, token);
+            // client.StartAsync();
+            // return client;
+        // });
                 
         builder.Services.AddSingleton<ITelegramBotClient,TelegramBotClient>( p=>
         {

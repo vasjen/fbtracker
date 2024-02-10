@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
 using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 using HtmlAgilityPack;
@@ -23,25 +22,13 @@ namespace fbtracker.Services {
                 IWebService webService =
                     scope.ServiceProvider
                         .GetRequiredService<IWebService>();
-                List<HttpClient> clients =
-                    webService.CreateHttpClients( webService.CreateHandlers( webService.GetProxyList())).GetAwaiter().GetResult();
-                int currentIndex = 0;
-
-                HttpClient getNextClient()
-                {
-                    HttpClient client = clients[currentIndex];
-                    client.DefaultRequestHeaders
-                        .Add("User-Agent","User Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)");
-                    currentIndex = (currentIndex + 1) % clients.Count;
-                    return client;
-                }
-
+                
                 Stopwatch timer = new();
                 timer.Start();
                     int numbers = await GetMaxNumberPage("https://www.futbin.com/players?player_rating=80-99&ps_price=10000-15000000");
                     for (int i = 1; i <= numbers; i++)
                     {
-                        HttpClient client = getNextClient();
+                        HttpClient client = webService.Client;
                         IAsyncEnumerable<Card> cards =  GetCards(
                             $"https://www.futbin.com/players?page={i}&player_rating=80-99&ps_price=10000-15000000", client, _logger);
                         await foreach (Card item in cards)
