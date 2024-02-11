@@ -2,9 +2,13 @@ using Discord;
 using Discord.WebSocket;
 using fbtracker.Services;
 using fbtracker.Services.Interfaces;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using Serilog.Sinks.Loki;
+using Serilog.Sinks.Loki.Labels;
 using Telegram.Bot;
+using LokiLabel = Serilog.Sinks.Grafana.Loki.LokiLabel;
 
 namespace fbtracker{
 
@@ -56,15 +60,11 @@ internal class Program
         {
             p.AddSerilog();
         });
-        builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
-        {
-            loggerConfiguration
-                .ReadFrom.Configuration(hostingContext.Configuration)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.LokiHttp(new NoAuthCredentials("http://loki"));
-        });
+        builder.Services.AddHealthChecks()
+            .AddCheck<BackgroundWorkerService>( "BackgroundWorkerService", HealthStatus.Unhealthy, new string[] {"bgw"});
+        builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
         WebApplication app = builder.Build();
+        app.UseSerilogRequestLogging();
         await app.RunAsync();
     }
     

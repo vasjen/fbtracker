@@ -28,6 +28,7 @@ public class PriceCheckerBackground : BackgroundWorkerService
             _logger.LogInformation("PriceCheckerBackground Hosted Service is working. Started at {0}", DateTime.Now); 
             Stopwatch timer = new();
             timer.Start();
+            
             SeedData? seedData = scope.ServiceProvider.GetService<SeedData>();
             IAsyncEnumerable<Card> cards =  seedData.EnsurePopulatedAsync(_services);
             IProfitService profitService = scope.ServiceProvider.GetService<IProfitService>();

@@ -1,6 +1,8 @@
-﻿namespace fbtracker.Services;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-public abstract class BackgroundWorkerService : BackgroundService
+namespace fbtracker.Services;
+
+public abstract class BackgroundWorkerService : BackgroundService, IHealthCheck
 {
     
     public TaskStatus DoWorkStatus { get; set; } = TaskStatus.Created;
@@ -14,6 +16,7 @@ public abstract class BackgroundWorkerService : BackgroundService
             {
                 if (this.DoWorkStatus is not TaskStatus.Running)
                 {
+                    
                     this.DoWorkStatus = TaskStatus.Running;
                     await DoWork(cancellationToken);
                     this.DoWorkStatus = TaskStatus.RanToCompletion;
@@ -35,4 +38,23 @@ public abstract class BackgroundWorkerService : BackgroundService
         }
     }
     protected abstract Task DoWork(CancellationToken cancellationToken);
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new CancellationToken())
+    {
+        try
+        {
+            if (this.DoWorkStatus is TaskStatus.Running)
+            {
+                return HealthCheckResult.Healthy();
+            }
+            else
+            {
+                return HealthCheckResult.Degraded();
+            }
+        }
+        catch (Exception e)
+        {
+            
+            return HealthCheckResult.Unhealthy();
+        }
+    }
 }
