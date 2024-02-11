@@ -1,0 +1,5 @@
+﻿metric_relabel_configs:
+  - source_labels: ['container_label_com_docker_swarm_service_name']
+    target_label: 'service'
+  - source_labels: ['app']
+    target_label: 'app'
