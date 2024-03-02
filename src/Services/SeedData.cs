@@ -82,7 +82,7 @@ namespace fbtracker.Services {
             {
                 if (i == 21 || i == 42)
                     i++;
-                if (nodesIndex >= link.Count)
+                if (nodesIndex >= link?.Count)
                     break;
                 
                 yield return new Card()
