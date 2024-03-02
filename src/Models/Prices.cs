@@ -35,7 +35,7 @@ public abstract class BasePrice
     public string Updated { get; set; } = string.Empty;
     public int Average => GetAverage();
 
-    public int GetAverage()
+    private int GetAverage()
     {
         int[] prices = { LCPrice, LCPrice2, LCPrice3, LCPrice4, LCPrice5 };
         int sum = 0;

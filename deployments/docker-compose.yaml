@@ -1,4 +1,5 @@
-version: '3.9'
+version: '3.8'
+name: fbtracker
 services:
   app:
     build:
@@ -6,40 +7,73 @@ services:
       dockerfile: ./dockerfile
     ports:
       - 9000:80
-#    depends_on:
-#      - postgres
     volumes:
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    networks:
-      - mynetwork
     container_name: app
 
-#  postgres:
-#    image: postgres:latest
-#    container_name: postgres
-#    restart: unless-stopped
-#    ports:
-#      - '5435:5432'
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=Pass44w0rd
-#      - POSTGRES_DB=Card
-#    command:
-#      - "postgres"
-#      - "-c"
-#      - "wal_level=logical"
-#      - "-c"
-#      - "max_prepared_transactions=10"
-#    volumes:
-#      - postgres-data:/var/lib/postgresql/data
-#    networks:
-#      - mynetwork
+  loki:
+    image: "grafana/loki:latest"
+    hostname: logs
+    volumes:
+      - loki:/loki
+    ports:
+      - "3100:3100" # http and Grafana data source
+    container_name: loki
+  
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: monitoring_node_exporter
+    restart: unless-stopped
+    expose:
+      - 9100
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: monitoring_cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - 8080
 
-networks:
-  mynetwork:
+     
+  grafana:
+    image: grafana/grafana-oss:latest-ubuntu
+    hostname: grafana
+    ports: 
+      - "3000:3000" #UI
+    volumes:
+      - grafana:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    links:
+      - prometheus:prometheus
+    depends_on:
+      - loki
+    container_name: grafana
+    
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      -  ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    expose:
+      - 9090
+    links:
+      - cadvisor:cadvisor
+      - node-exporter:node-exporter
+    container_name: prometheus
 
-#volumes:
-#  postgres-data:
+volumes:
+  grafana: ~
+  loki: ~

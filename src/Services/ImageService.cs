@@ -7,6 +7,12 @@ namespace fbtracker.Services;
 
 public class ImageService : IImageService
 {
+    private readonly ILogger<ImageService> _logger;
+
+    public ImageService(ILogger<ImageService> logger)
+    {
+        _logger = logger;
+    }
     public async Task DownloadImageAsync(string directoryPath, string fileName, Uri uri)
     {
         
@@ -20,8 +26,16 @@ public class ImageService : IImageService
         }
         if (!File.Exists(path))
         {
-            byte[] imageBytes = await httpClient.GetByteArrayAsync(uri);
-            await File.WriteAllBytesAsync(path, imageBytes);
+            try
+            {
+                byte[] imageBytes = await httpClient.GetByteArrayAsync(uri);
+                await File.WriteAllBytesAsync(path, imageBytes);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+            }
+            
         }
 
     }

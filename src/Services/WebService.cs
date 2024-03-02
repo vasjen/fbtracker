@@ -3,26 +3,41 @@ using System.Text;
 using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 using Newtonsoft.Json;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace fbtracker.Services;
 
 public class WebService : IWebService
 {
+    public List<HttpClient> Clients { get; init; }
+    public  HttpClient Client { get => getNextClient() ;  } 
     private readonly HttpClient _client;
+    private int CURRENT_INDEX = 0;
+    private const string JSON_DATA = @"{
+                        ""type"": ""ipv4"",
+                        ""page"": 1,
+                        ""page_size"": 100,
+                        ""sort"": 1
+                    }";
 
     public WebService(IHttpClientFactory clientFactory)
     {
         _client = clientFactory.CreateClient("proxy");
+        this.Clients = CreateHttpClients(CreateHandlers(GetProxyList())).GetAwaiter().GetResult();
     }
-    public async IAsyncEnumerable<WebProxy> GetProxyList()
+    
+    private HttpClient getNextClient()
     {
-        string jsonData = @"{
-            ""type"": ""ipv4"",
-            ""page"": 1,
-            ""page_size"": 10,
-            ""sort"": 1
-        }";
-        StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        HttpClient client = this.Clients[CURRENT_INDEX];
+        CURRENT_INDEX = (CURRENT_INDEX + 1) % this.Clients.Count;
+        return client;
+    }
+    
+    private async IAsyncEnumerable<WebProxy> GetProxyList()
+    {
+        
+        StringContent content = new StringContent(JSON_DATA, Encoding.UTF8, "application/json");
         HttpResponseMessage proxiesInJson = await _client.PostAsync(_client.BaseAddress, content);
         Proxies? proxiesFromJson = JsonConvert.DeserializeObject<Proxies>(await proxiesInJson.Content.ReadAsStringAsync());
         
@@ -41,7 +56,7 @@ public class WebService : IWebService
         }
     }
     
-    public async IAsyncEnumerable<HttpClientHandler> CreateHandlers(IAsyncEnumerable<WebProxy> proxies)
+    private async IAsyncEnumerable<HttpClientHandler> CreateHandlers(IAsyncEnumerable<WebProxy> proxies)
     {   
         await foreach (WebProxy proxy in proxies)
         {
@@ -50,11 +65,12 @@ public class WebService : IWebService
                 Proxy = proxy
             };
             handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12; 
             yield return handler;
         }
     }
     
-    public async Task<List<HttpClient>> CreateHttpClients(IAsyncEnumerable<HttpClientHandler> handlers)
+    private async Task<List<HttpClient>> CreateHttpClients(IAsyncEnumerable<HttpClientHandler> handlers)
     {
         List<HttpClient> clients = new();
         await foreach (HttpClientHandler handler in handlers)
@@ -76,8 +92,9 @@ public class WebService : IWebService
         };
         HttpClient client = new HttpClient(handler: handler, disposeHandler: true);
         HttpResponseMessage response = await client.GetAsync("https://futbin.com/");
-        Console.WriteLine("For proxy {0} status code is {1}", proxy.Address, response.StatusCode);
         return response.IsSuccessStatusCode;
     }
+   
+   
     
 }

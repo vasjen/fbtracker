@@ -1,112 +1,91 @@
-using fbtracker.Models;
+﻿using fbtracker.Models;
 using fbtracker.Services.Interfaces;
 
-namespace fbtracker.Services
-{
-    public class ProfitService : IProfitService
-    {
-        public int ProxyCount = 10;
-        private readonly ISalesHistoryService _historyService;
-        private readonly IPriceService _priceService;
-        private readonly ITelegramService _tgbot;
-        private readonly IServiceProvider _services;
-        private readonly INotificationService _discord;
-        private  const double AFTER_TAX = 0.95;
-        private  const double MIN_PROFIT = 1000;
+namespace fbtracker.Services;
 
-        public ProfitService(
-            ISalesHistoryService history, 
-            IPriceService priceService,
-            ITelegramService tgbot,
-            INotificationService discord,
-            IServiceProvider services)
+public class ProfitService : IProfitService
+{
+    private readonly IGetingCardData _getingCardData;
+    private readonly IEnumerable<INotificationService> _notificationServices;
+    private readonly ILogger<ProfitService> _logger;
+    private readonly IWebService _webService;
+    
+    private  const double AFTER_TAX = 0.95;
+    private  const double MIN_PROFIT = 1000;
+
+    public ProfitService(IGetingCardData getingCardData, IEnumerable<INotificationService> notificationServices, ILogger<ProfitService> logger, IWebService webService)
+    {
+        _getingCardData = getingCardData;
+        _notificationServices = notificationServices;
+        _logger = logger;
+        _webService = webService;
+    }
+   
+
+
+    public async Task FindProfitCards(IAsyncEnumerable<Card> cards)
+    {
+        Parallel.ForEach(await cards.ToListAsync(),
+            new ParallelOptions { MaxDegreeOfParallelism = _webService.Clients.Count }, ProfitSearchingParallel);
+    }
+
+    private async void ProfitSearchingParallel(Card p)
+    {
+        if (p.FbDataId == 0) p.FbDataId = Scraping.GetDataId(p, _webService.Client);
+        try
         {
-            _historyService = history;
-            _priceService = priceService;
-            _tgbot = tgbot;
-            _services = services;
-            _discord = discord;
-        }
-        public async Task FindingProfitAsync (IAsyncEnumerable<Card> cards)
-        {
-             using (IServiceScope scope = _services.CreateScope())
-             {
-                 IWebService webService = 
-                     scope.ServiceProvider
-                         .GetRequiredService<IWebService>();
-                List<HttpClient> clients = await  webService.CreateHttpClients(webService.CreateHandlers(webService.GetProxyList()));
-                int currentIndex = 0;
-                Console.WriteLine("Count of clients: {0} in ProfitService", clients.Count);
-                HttpClient getNextClient()
-                {
-                    HttpClient client = clients[currentIndex];
-                    currentIndex = (currentIndex + 1) % clients.Count;
-                    return client;
-                }
-                Parallel.ForEach(await cards.ToListAsync(),
-                    new ParallelOptions { MaxDegreeOfParallelism = clients.Count }, async p =>
-                    {
-                        if (p.FbDataId == 0)
-                            p.FbDataId = Scraping.GetDataId(p, getNextClient());
-                        try
-                        {
-                            HttpClient client = getNextClient();
-                            CheckProfitAsync(p, client).Wait();
-                        }
-                        catch (Exception ex) { 
-                            Console.WriteLine(ex.Message);
-                            Console.WriteLine($"Error with {p.FbDataId}");
-                        }
-                    });
-             }
-         }
-      
-        private async Task CheckProfitAsync(Card card, HttpClient client)
-        {
-            await Task.Delay(1000);
-            await _priceService.GetPriceAsync(card, client);
-            if (card.Prices.Ps.LCPrice2 != 0 && card.Prices.Ps.LCPrice != 0)
-            {   
-                IEnumerable<SalesHistory>? history = await _historyService.GetSalesHistoryAsync(card.FbDataId, client);
-                IEnumerable<SalesHistory>? lastSales = history?
-                    .Where(p => p.status.Contains("closed"))
-                    .Where(p => Math.Abs(card.Prices.Ps.Average - p.Price) <= (card.Prices.Ps.Average * 0.15))
-                    .Take(10);
-                             
-                double avgPrice=(lastSales!.Average(p => p.Price));
-                if (history is null)
-                {
-                    Console.WriteLine($"History is null or incorrect for {card.ShortName}");
-                    return;
-                }
-                Console.WriteLine($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
-                Console.WriteLine($"Average by history: {avgPrice}. Difference profit: {avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice}  ");
-           
-                int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);
-                if (profit > 0 && profit >= MIN_PROFIT && card.Prices.Ps.LCPrice2 * AFTER_TAX > card.Prices.Ps.LCPrice)
-                {
-                    Console.WriteLine("\t => !!PROFIT!!!");
-                    Console.WriteLine($"{card.ShortName } {card.Version} {card.Rating} {card.Position} Profit: {profit} for {card.ShortName} {card.Version}");
-                    card.PromoUrl = await Scraping.GetBackgroundImage(Scraping.URL + "/player/" + card.FbId);
-                    string link = card.PromoUrl.Substring(card.PromoUrl.LastIndexOf('/') + 1);
-                    card.PromoUrlFile = link.Remove(link.IndexOf('?'));
-                    Console.WriteLine("Promo urlNameFile: {0} added to card", card.PromoUrlFile);
-                    Profit newProfit = new() 
-                    { 
-                        CardId = card!.CardId, 
-                        Price = card.Prices.Ps.LCPrice, 
-                        SellPrice = card.Prices.Ps.LCPrice2 , 
-                        ProfitValue = profit, 
-                        Percentage = (decimal)card.Prices.Ps.LCPrice / (decimal)avgPrice   
-                    };
-                    Console.WriteLine($"Profit: {profit} for {card.ShortName} {card.Version}");
-                    await _tgbot.SendInfo(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
-                    await _discord.SendMessage(newProfit,Convert.ToInt32(avgPrice),lastSales, card);
-                    
-                }
-                else
-                    Console.WriteLine($"ID: {card.FbDataId}. No profit"); 
+            HttpClient client = _webService.Client;
+            ProfitCard? profitCard = await CheckProfitAsync(p, client);
+            if (profitCard != null)
+            {
+                _getingCardData.AddImagesUrlToCard(p);
+                await _getingCardData.DownloadImageAsync("Cards",$"{p.FbDataId}.png",new Uri(p.ImageUrl));
+                await _getingCardData.DownloadImageAsync("Promo",$"{p.PromoUrlFile}",new Uri(p.PromoUrl));
+                await _getingCardData.CombineImages("Cards/" + $"{p.FbDataId}.png","Promo/" + $"{p.PromoUrlFile}",$"{p.FbDataId}.png");
+                await SendNotificationAsync(profitCard);
             }
         }
-     }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error with {p} \n {ex.Message}");
+        }
+    }
+
+    private async Task<ProfitCard?> CheckProfitAsync(Card card, HttpClient client)
+    {
+        await Task.Delay(1500);
+        await _getingCardData.GetPriceAsync(card, client);
+        if (card.Prices.Ps.LCPrice2 != 0 && card.Prices.Ps.LCPrice != 0)
+        {
+            IEnumerable<SalesHistory>? history = await _getingCardData.GetSalesHistoryAsync(card.FbDataId, client);
+            IEnumerable<SalesHistory>? lastSales = history?
+                .Where(p => p.status.Contains("closed"))
+                .Where(p => Math.Abs(card.Prices.Ps.Average - p.Price) <= (card.Prices.Ps.Average * 0.15))
+                .Take(10);
+            // _logger.LogInformation($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
+            double avgPrice = (lastSales!.Average(p => p.Price));
+            if (history is null)
+            {
+                _logger.LogInformation($"History is null or incorrect for {card.ShortName}");
+
+            }
+
+            int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);
+            if (profit > 0 && profit >= MIN_PROFIT && card.Prices.Ps.LCPrice2 * AFTER_TAX > card.Prices.Ps.LCPrice)
+            {
+                _logger.LogInformation($"Found profit card: {card}, profit: {profit}");
+                return new ProfitCard(card, profit, Convert.ToInt32(avgPrice), lastSales);
+            }
+        }
+
+        return default;
+    }
+    
+    private async Task SendNotificationAsync(ProfitCard card)
+    {
+        foreach (INotificationService service in _notificationServices)
+        {
+            await service.SendMessageAsync(card);
+        }
+    }
 }

@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using fbtracker.Models;
 using HtmlAgilityPack;
+using Mapster;
 using Newtonsoft.Json;
 
 namespace fbtracker.Services{
@@ -12,6 +13,7 @@ namespace fbtracker.Services{
 
         public static async Task<string[]> GetPageAsStrings(HttpClient client, string url)
         {
+            await Task.Delay(1500);
             string res = await client.GetStringAsync(url);
             return res.Split(Environment.NewLine);
         }
@@ -27,21 +29,32 @@ namespace fbtracker.Services{
             return doc;
         }
 
-        public static async Task<string> GetBackgroundImage(string url)
+        public static string GetBackgroundImage(string url)
         {
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent",
                 "User Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)");
-            string page = await client.GetStringAsync(url);
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(page);
-            HtmlNode node = Scraping.ParseFromDoc(doc, "//*[@id=\"download-prices-ele\"]/div[7]/div[1]/img");
-            string? link = node.GetAttributeValue("src", "");
+            string link = string.Empty;
+            try
+            {
+                string page = client.GetStringAsync(url).Result;
+                HtmlDocument doc = new HtmlDocument();
+                doc.LoadHtml(page);
+                HtmlNode node = Scraping.ParseFromDoc(doc, "//*[@id=\"download-prices-ele\"]/div[7]/div[1]/img");
+                link = node.GetAttributeValue("src", "");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
+            
 
             return URL + link;
         }
         public static int GetDataId(Card card, HttpClient client)
         {
+            Task.Delay(2000);
             Task<string[]>? result =  Scraping.GetPageAsStrings(client,$"http://www.futbin.com/player/{card.FbId}");
             int fbdataid = 0;
             for (int i = 0; i < result.Result.Length; i++)
@@ -54,31 +67,64 @@ namespace fbtracker.Services{
             }
             return fbdataid;
         }
-        public static int GetFbdataIdFromUrl(string url)
-        {
-            string lastPart = url.Substring(url.LastIndexOf('/') + 1);
-            string id = lastPart.Remove(lastPart.IndexOf('.'));
-            return Int32.Parse(Regex.IsMatch(id, @"[^\d]") ? id.Remove(0, 1) : id);
-        }
 
         public static Prices GetPrices(int fbDataId,string jsonPrice)
+            =>  new (
+                    GetPrice<Ps>(fbDataId, jsonPrice), new Pc() 
+                    // GetPrice<Pc>(fbDataId, jsonPrice, "pc")
+                );
+        
+        
+
+        private static TBasePrice GetPrice<TBasePrice>(int fbDataId, string jsonPrice)
+        where TBasePrice : BasePrice, new()
         {
+            TBasePrice price = new();
             JsonNode jsonNod = JsonNode.Parse(jsonPrice);
-            Ps ps = new();
-            ps.LCPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice"].GetValue<string>());
-            ps.LCPrice2 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice3 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice4 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.LCPrice5 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPrice2"].GetValue<string>());
-            ps.Updated = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["updated"].GetValue<string>();
-            ps.MinPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["MinPrice"].GetValue<string>());
-            ps.MinPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["MaxPrice"].GetValue<string>());
-            ps.PRP = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["PRP"].GetValue<string>());
-            ps.LCPClosing = jsonNod[$"{fbDataId}"]!["prices"]["ps"]!["LCPClosing"].GetValue<int>();
+            // TBasePrice Psprice = jsonPrice.Adapt<TBasePrice>();
+            try
+            {
+                    price.LCPrice = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPrice"].GetValue<string>());
+                    price.LCPrice2 = ConvertPriceToInt(jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPrice2"].GetValue<string>());
+                    price.LCPrice3 =
+                        ConvertPriceToInt(
+                            jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPrice2"]
+                                .GetValue<string>());
+                    price.LCPrice4 =
+                        ConvertPriceToInt(
+                            jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPrice2"]
+                                .GetValue<string>());
+                    price.LCPrice5 =
+                        ConvertPriceToInt(
+                            jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPrice2"]
+                                .GetValue<string>());
+                    price.Updated =
+                        jsonNod[$"{fbDataId}"]!["prices"]?[$"{typeof(TBasePrice).Name.ToLower()}"]!["updated"]
+                            .GetValue<string>();
+                    price.MinPrice =
+                        ConvertPriceToInt(
+                            jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["MinPrice"]
+                                .GetValue<string>());
+                    price.MaxPrice =
+                        ConvertPriceToInt(
+                            jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["MaxPrice"]
+                                .GetValue<string>());
+                    price.PRP = ConvertPriceToInt(
+                        jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["PRP"]
+                            .GetValue<string>());
+                    // price.LCPClosing =
+                        // jsonNod[$"{fbDataId}"]!["prices"][$"{typeof(TBasePrice).Name.ToLower()}"]!["LCPClosing"]
+                            // .GetValue<int>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
             
-            Pc pc = new(); // Add in some feature updates PC support
-            return new Prices( ps, pc );
+
+            return price;
         }
+        
         private static int ConvertPriceToInt(string price)
             => Int32.Parse(price.Replace(",", ""));
 

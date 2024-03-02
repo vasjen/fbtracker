@@ -4,6 +4,6 @@ namespace fbtracker.Services.Interfaces
 {
     public interface ITelegramService
     {
-         Task SendInfo(Profit ProfitPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card card);
+         Task SendInfo(ProfitCard profitCardPlayer, int avgPrice, IEnumerable<SalesHistory> lastTenSales, Card card);
     }
 }
