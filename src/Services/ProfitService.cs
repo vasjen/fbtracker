@@ -25,7 +25,7 @@ public class ProfitService : IProfitService
 
     public async Task FindProfitCards(IAsyncEnumerable<Card> cards)
     {
-        Parallel.ForEach(await cards.ToListAsync(),
+        Parallel.ForEach(await cards.Where(p => !p.Version.Contains("IF")).ToListAsync(),
             new ParallelOptions { MaxDegreeOfParallelism = _webService.Clients.Count }, ProfitSearchingParallel);
     }
 
