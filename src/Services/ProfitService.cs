@@ -1,5 +1,6 @@
 ﻿using fbtracker.Models;
 using fbtracker.Services.Interfaces;
+using Newtonsoft.Json;
 
 namespace fbtracker.Services;
 
@@ -9,16 +10,23 @@ public class ProfitService : IProfitService
     private readonly IEnumerable<INotificationService> _notificationServices;
     private readonly ILogger<ProfitService> _logger;
     private readonly IWebService _webService;
-    
+    private readonly IRedisService _redisService;
+
     private  const double AFTER_TAX = 0.95;
     private  const double MIN_PROFIT = 1000;
 
-    public ProfitService(IGetingCardData getingCardData, IEnumerable<INotificationService> notificationServices, ILogger<ProfitService> logger, IWebService webService)
+    public ProfitService(
+        IGetingCardData getingCardData, 
+        IEnumerable<INotificationService> notificationServices, 
+        ILogger<ProfitService> logger, 
+        IWebService webService,
+        IRedisService redisService)
     {
         _getingCardData = getingCardData;
         _notificationServices = notificationServices;
         _logger = logger;
         _webService = webService;
+        _redisService = redisService;
     }
    
 
@@ -38,17 +46,29 @@ public class ProfitService : IProfitService
             ProfitCard? profitCard = await CheckProfitAsync(p, client);
             if (profitCard != null)
             {
-                _getingCardData.AddImagesUrlToCard(p);
-                await _getingCardData.DownloadImageAsync("Cards",$"{p.FbDataId}.png",new Uri(p.ImageUrl));
-                await _getingCardData.DownloadImageAsync("Promo",$"{p.PromoUrlFile}",new Uri(p.PromoUrl));
-                await _getingCardData.CombineImages("Cards/" + $"{p.FbDataId}.png","Promo/" + $"{p.PromoUrlFile}",$"{p.FbDataId}.png");
+                await PreparingCardToSending(p);
+                if (_redisService.IsExist(p.FbId.ToString()))
+                {
+                    _logger.LogInformation($"Card {p} was already sent");
+                    return;
+                }
                 await SendNotificationAsync(profitCard);
+                string serialized = JsonConvert.SerializeObject(p);
+                _redisService.AddValueToDb(p.FbId.ToString(), serialized);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error with {p} \n {ex.Message}");
         }
+    }
+
+    private async Task PreparingCardToSending(Card p)
+    {
+        _getingCardData.AddImagesUrlToCard(p);
+        await _getingCardData.DownloadImageAsync("Cards",$"{p.FbDataId}.png",new Uri(p.ImageUrl));
+        await _getingCardData.DownloadImageAsync("Promo",$"{p.PromoUrlFile}",new Uri(p.PromoUrl));
+        await _getingCardData.CombineImages("Cards/" + $"{p.FbDataId}.png","Promo/" + $"{p.PromoUrlFile}",$"{p.FbDataId}.png");
     }
 
     private async Task<ProfitCard?> CheckProfitAsync(Card card, HttpClient client)
@@ -62,12 +82,10 @@ public class ProfitService : IProfitService
                 .Where(p => p.status.Contains("closed"))
                 .Where(p => Math.Abs(card.Prices.Ps.Average - p.Price) <= (card.Prices.Ps.Average * 0.15))
                 .Take(10);
-            // _logger.LogInformation($"Check  Card: {card.ShortName}, CurrentPrice: {card.Prices.Ps.LCPrice}, Average: {card.Prices.Ps.Average }");
             double avgPrice = (lastSales!.Average(p => p.Price));
             if (history is null)
             {
                 _logger.LogInformation($"History is null or incorrect for {card.ShortName}");
-
             }
 
             int profit = (int)(avgPrice * AFTER_TAX - card.Prices.Ps.LCPrice);

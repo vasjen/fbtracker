@@ -34,7 +34,7 @@ internal class Program
                     
         });
         builder.Services.AddTransient<IGetingCardData, GetingCardData>();
-        builder.Services.AddScoped<SeedData>();
+        builder.Services.AddSingleton<SeedData>();
         builder.Services.AddTransient<IProfitService, ProfitService>();
         builder.Services.AddTransient<ISalesHistoryService,SalesHistoryService>();
         builder.Services.AddTransient<INotificationService,TelegramService>();
@@ -55,7 +55,7 @@ internal class Program
             return new TelegramBotClient(token: token);
         });
         builder.Services.AddHostedService<PriceCheckerBackground>();
-        
+        builder.Services.AddSingleton<IRedisService, RedisService>();
         builder.Services.AddLogging(p =>
         {
             p.AddSerilog();
