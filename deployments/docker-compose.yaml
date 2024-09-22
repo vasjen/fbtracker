@@ -9,6 +9,7 @@ services:
       - 9000:80
     volumes:
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+     # - $APPDATA/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -40,8 +41,13 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
     expose:
       - 8080
-
-     
+    
+  redis:
+    image: "redis/redis-stack-server:latest"
+    ports:
+      - 6379:6379
+    container_name: redis
+ 
   grafana:
     image: grafana/grafana-oss:latest-ubuntu
     hostname: grafana

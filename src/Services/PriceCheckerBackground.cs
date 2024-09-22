@@ -8,12 +8,15 @@ public class PriceCheckerBackground : BackgroundWorkerService
 {
     private readonly ILogger<PriceCheckerBackground> _logger;
     private readonly IServiceProvider _services;
+    private readonly SeedData _seedData;
+    private readonly IProfitService _profitService;
 
-    public PriceCheckerBackground(ILogger<PriceCheckerBackground> logger, IServiceProvider services) 
-       
+    public PriceCheckerBackground(ILogger<PriceCheckerBackground> logger, IServiceProvider services, SeedData seedData, IProfitService profitService) 
     {
         _logger = logger;
         _services = services;
+        _seedData = seedData;
+        _profitService = profitService;
     }
 
 
@@ -21,24 +24,16 @@ public class PriceCheckerBackground : BackgroundWorkerService
 
     protected override async Task DoWork(CancellationToken cancellationToken)
     {
-        
-      
-        using (IServiceScope scope = this._services.CreateScope())
-        {
             _logger.LogInformation("PriceCheckerBackground Hosted Service is working. Started at {0}", DateTime.Now); 
             Stopwatch timer = new();
             timer.Start();
             
-            SeedData? seedData = scope.ServiceProvider.GetService<SeedData>();
-            IAsyncEnumerable<Card> cards =  seedData.EnsurePopulatedAsync(_services);
-            IProfitService profitService = scope.ServiceProvider.GetService<IProfitService>();
-            await profitService.FindProfitCards(cards);
+            IAsyncEnumerable<Card> cards =  _seedData.EnsurePopulatedAsync(_services);
+            await _profitService.FindProfitCards(cards);
         
             _logger.LogInformation(
                 "PriceCheckerBackground Hosted Service is finished at {0}.\n Total time: {1}", DateTime.Now, timer.Elapsed);
             timer.Reset();
-        }
-        
     }
 }
 
