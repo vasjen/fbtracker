@@ -489,3 +489,7 @@ $RECYCLE.BIN/
 # Images folders 
 Cards/
 Promo/
+
+# Local observations and browser caches
+**/data/
+**/.playwright-browsers/

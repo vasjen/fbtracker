@@ -1,85 +1,36 @@
-version: '3.8'
 name: fbtracker
 services:
   app:
     build:
-      context: ../src
-      dockerfile: ./dockerfile
+      context: ..
+      dockerfile: src/dockerfile
+    init: true
+    shm_size: 1gb
     ports:
-      - 9000:80
+      - "127.0.0.1:9000:8080"
     volumes:
-      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
-     # - $APPDATA/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - observations:/app/data
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-    container_name: app
-
-  loki:
-    image: "grafana/loki:latest"
-    hostname: logs
-    volumes:
-      - loki:/loki
-    ports:
-      - "3100:3100" # http and Grafana data source
-    container_name: loki
-  
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: monitoring_node_exporter
-    restart: unless-stopped
-    expose:
-      - 9100
-  cadvisor:
-    image: google/cadvisor:latest
-    container_name: monitoring_cadvisor
-    restart: unless-stopped
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    expose:
-      - 8080
-    
-  redis:
-    image: "redis/redis-stack-server:latest"
-    ports:
-      - 6379:6379
-    container_name: redis
- 
-  grafana:
-    image: grafana/grafana-oss:latest-ubuntu
-    hostname: grafana
-    ports: 
-      - "3000:3000" #UI
-    volumes:
-      - grafana:/var/lib/grafana
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
-    links:
-      - prometheus:prometheus
+      ASPNETCORE_ENVIRONMENT: Production
+      Tracker__Notifications__DryRun: ${TRACKER_DRY_RUN:-true}
+      Tracker__Notifications__Token: ${TELEGRAM_TOKEN:-}
+      Tracker__Notifications__ChatId: ${TELEGRAM_CHAT_ID:-}
+      Tracker__Notifications__RedisConnection: redis:6379
     depends_on:
-      - loki
-    container_name: grafana
-    
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
+      redis:
+        condition: service_healthy
+  redis:
+    image: redis:8.2-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
     volumes:
-      -  ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    expose:
-      - 9090
-    links:
-      - cadvisor:cadvisor
-      - node-exporter:node-exporter
-    container_name: prometheus
-
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 volumes:
-  grafana: ~
-  loki: ~
+  observations:
+  redis:

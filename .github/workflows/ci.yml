@@ -1,0 +1,17 @@
+name: FC 27 checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore fbtracker.sln
+      - run: dotnet test fbtracker.sln --no-restore -c Release --logger trx
+      - run: dotnet publish src/fbtracker.csproj --no-restore -c Release -o artifacts/app

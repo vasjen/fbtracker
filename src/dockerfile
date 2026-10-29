@@ -1,20 +1,26 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
+WORKDIR /source
+COPY global.json fbtracker.sln ./
+COPY src/fbtracker.csproj src/
+COPY tests/FbTracker.Tests.csproj tests/
+RUN dotnet restore fbtracker.sln
+COPY src/ src/
+COPY tests/ tests/
+RUN dotnet test fbtracker.sln -c Release --no-restore
+RUN dotnet publish src/fbtracker.csproj -c Release --no-restore -o /publish
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-RUN apt-get update \
-    && apt-get install -y \
-        libc6-dev \
-        libgdiplus \
-        libx11-dev \
-     && rm -rf /var/lib/apt/lists/*
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    ASPNETCORE_HTTP_PORTS=8080 \
+    Tracker__ObservationDirectory=/app/data/observations
 WORKDIR /app
-
-COPY *.csproj ./
-RUN dotnet restore
-
-COPY . ./
-RUN dotnet publish -c release -o /app
-
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
-WORKDIR /app
-COPY --from=build /app ./
+COPY --from=build /publish/ ./
+RUN dotnet fbtracker.dll --install-browser-with-deps \
+    && mkdir -p /app/data \
+    && chown -R app:app /app/data \
+    && chmod -R a+rX /app/.playwright \
+    && chmod -R a+rX /ms-playwright \
+    && rm -rf /var/lib/apt/lists/*
+USER app
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "fbtracker.dll"]
