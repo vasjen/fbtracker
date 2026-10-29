@@ -1,0 +1,5 @@
+# Pinned HTTP/TLS runtime; no browser automation packages.
+curl_cffi==0.17.0
+cffi==2.1.1
+pycparser==3.12
+certifi==2026.10.23

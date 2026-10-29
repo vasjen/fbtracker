@@ -1,32 +1,128 @@
-FbTracker
-============
+# FbTracker — FC 27
 
-FbTracker is a free Futbin price tracker (Snipe scanner) for trading in FUT Market. For every tradable card via Telegram.Bot sending notifications to chat.
+Сканер кандидатов на покупку по данным FUTBIN. Собирает каталог продаваемых карточек, читает пять цен и завершённые аукционы, оценивает наблюдаемую ликвидность и отправляет сигнал в Telegram. Покупки приложение не совершает.
 
-![Example](https://github.com/vasjen/fbtracker/blob/master/img/Example.png)
+Карточка определяется **сезоном и FUTBIN ID**. Имя, рейтинг, позиция и версия — только атрибуты. TOTW, HoloTOTW, обычная и другие промо-карточки одного футболиста остаются разными, даже при одинаковом рейтинге. Данные рынка и защита от повторных сигналов дополнительно разделены на Console и PC.
 
-## Requirements
-- .NET 7.0 or higher
-- MSSQL 2019 or higher
+## Быстрый запуск
 
-## Get started
-1. Add your Proxy to appsetings.json
-2. Enable secret storage
-```powershell
-dotnet user-secrets init
+Нужны .NET SDK 10 и Python 3.10+ с `curl_cffi` (в контейнере устанавливаются автоматически). Redis необязателен для одного процесса. MSSQL не используется.
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r src/Transport/requirements.txt
+dotnet restore fbtracker.sln
+dotnet test fbtracker.sln -c Release
+dotnet build src/fbtracker.csproj -c Release
+cd src
+dotnet bin/Release/net10.0/fbtracker.dll --once --dry-run --catalog-pages=1 --limit=3
 ```
-3. Add your secrets to storage (MSSQL root password, Proxy login and password, TelegramBot API
-```powershell
-dotnet user-secrets set "Telegram:Token" "<Your API>"
-dotnet user-secrets set "Proxy:Login" "<Your Proxy Login>"
-dotnet user-secrets set "Proxy:Password" "<Your Proxy Password>"
-dotnet user-secrets set "DbPassword" "<Your DB Password>"
+
+По умолчанию `Transport:Mode=CurlCffi`: C# передаёт URL постоянному Python-процессу, который выполняет только HTTP-запрос через libcurl. TLS/HTTP-профиль `safari` — настройки сетевого протокола, а не запуск Safari. Chrome, Chromium, Playwright, браузерный движок и JavaScript не используются. HTML разбирается в C# через HtmlAgilityPack. `Transport:PythonExecutable` позволяет указать абсолютный путь к Python из venv. На Windows активация окружения: `.venv\Scripts\Activate.ps1`.
+
+Для сетей, где работает обычный .NET HttpClient, доступен `Transport:Mode=Http`; Python тогда не нужен. Старое значение `Browser` отклоняется как ошибка конфигурации.
+
+По умолчанию **DryRun=true**: кандидаты записываются в журнал и JSONL, Telegram не вызывается. `--once` выполняет один цикл; без него приложение работает постоянно. `--catalog-pages` и `--limit` нужны для короткой проверки; без них обрабатывается весь доступный каталог в заданном диапазоне рейтингов. Код завершения одноразового запуска: 0 — цикл выполнен, 1 — ошибка, 130 — отмена.
+
+Все настройки — в `src/appsettings.json`. Секреты задавайте через user-secrets или переменные окружения, а не в Git:
+
+```sh
+# Из корня репозитория
+dotnet user-secrets --project src set "Tracker:Notifications:Token" "<bot-token>"
+dotnet user-secrets --project src set "Tracker:Notifications:ChatId" "<chat-id>"
+# Включить только после проверки сухого запуска
+dotnet user-secrets --project src set "Tracker:Notifications:DryRun" "false"
+# Необязательно; обязательно для общей защиты от дублей между процессами
+dotnet user-secrets --project src set "Tracker:Notifications:RedisConnection" "localhost:6379"
 ```
-4. Run application using CLI
-```powershell
-dotnet run
+
+В окружении `:` заменяется на `__`, например `Tracker__Platforms__0=Console`, `Tracker__Platforms__1=Pc`. Приоритет: appsettings → user-secrets → окружение → параметры командной строки. `--dry-run` всегда принудительно отключает отправку. Старая конфигурация `Telegram:*`, `Proxy:*` и другие старые ключи автоматически не переносятся.
+
+## Источник данных и карточки без цены
+
+Адаптер использует публичные страницы FC 27, проверенные 29 октября 2026:
+
+- Каталог `/27/players?eUnt=1&player_rating=80-99&page=N`. Проверяется, что в ответе действительно активен `Exclude untradeables`; без подтверждения цикл останавливается.
+- Рынок `/27/player/{futbinId}/{slug}/market`: отдельные ценовые блоки и таблицы аукционов для Console и PC.
+- SBC, objectives и другие непередаваемые карточки исключаются серверным фильтром и дополнительной проверкой маркеров в строках. Положительная стоимость сборки SBC никогда не принимается за рыночную цену.
+- Нулевая/отсутствующая цена **не означает**, что карточка непередаваемая. Подтверждённо продаваемая карточка остаётся в опросе, но без необходимых цен сигнал невозможен.
+- Редирект или canonical на другую карточку/сезон, исчезнувшая структура страницы, 403/429 не превращаются в данные рынка. Старый снимок при ошибке не используется.
+
+Это HTML-адаптер, а не официальный стабильный API. Сервер отдаёт и цены, и таблицу продаж с датами непосредственно в HTML. Проверка 29 октября 2026: обычный curl получал 403, а `curl_cffi` с профилем `safari` получил 200 для каталога и рынка; одноразовый запуск приложения прочитал три карточки без ошибок, затем Linux-контейнер обработал 10 карточек / 20 снимков Console и PC без ошибок. Сохранены отдельные фикстуры именно HTTP-ответов.
+
+Успешный запрос с одной сети не гарантирует доступ со всех прокси. Если конкретный IP блокируется, приложение сообщает HTTP-статус и Cloudflare Ray ID (если есть). CAPTCHA/JavaScript challenge не исполняются; `cf-mitigated: challenge`, даже с HTTP 200, не принимается за данные. При 403/429 весь пул получает паузу `max(BlockCooldownSeconds, Retry-After)`, текущий цикл прекращается. Автоматического перехода на браузер, другой прокси или прямое соединение после ошибки нет.
+
+## Как формируется сигнал
+
+По умолчанию окно наблюдений — 60 минут. Учитываются только завершённые аукционы внутри окна; Buy Now отделены от Bid и непроданных лотов.
+
+Условия кандидата:
+
+1. Пять ценовых позиций прочитаны независимо; первые две положительные, положительные цены упорядочены. Цена покупки от 10 тысяч до 15 миллионов монет.
+2. Известно время обновления цены; она не старше 30 минут. Есть минимум две покупки Buy Now после обновления цены с дополнительным минутным запасом на округление времени.
+3. Минимум 5 Buy Now, 8 завершённых аукционов и 5 наблюдаемых Buy Now/час; доля проданных среди наблюдаемых завершённых лотов — не ниже 30%. Последняя Buy Now не старше 10 минут.
+4. Медианное абсолютное отклонение продаж / медиана ≤ 10%; медиана поздней половины продаж не падает более чем на 8% относительно ранней.
+5. Оценка продажи — минимум медианы завершённых Buy Now и медианы положительных цен №2–5. Прибыль после 5% комиссии и 2% резерва ≥ 1000 монет, ROI ≥ 3%. Проверяется также запас до второй цены после комиссии.
+
+Эти пороги — начальная конфигурация, не результат калибровки на рынке FC 27. Сигнал означает **кандидата на ручную проверку**, а не подтверждённый доступный лот или гарантированную прибыль. FUTBIN показывает выборку: `Buy Now/час` — число видимых покупок в заданном окне / длительность окна, а не оценка полного оборота EA. Подробнее: [модель и ограничения](docs/fc27-data-contract.md).
+
+## Параллельный опрос и прокси
+
+Один worker владеет одной постоянной HTTP-сессией, отдельными cookies и своим прокси. При `CurlCffi` это один небольшой Python/libcurl-процесс на worker. Карточки берутся из общей очереди, все задачи ожидаются через `Task.WhenAll`; следующий цикл не перекрывает предыдущий. Каталог обновляется каждые 6 часов, а не на каждом проходе.
+
+```sh
+dotnet user-secrets --project src set "Tracker:Transport:Proxies:0:Server" "http://proxy.example:8080"
+dotnet user-secrets --project src set "Tracker:Transport:Proxies:0:Username" "<login>"
+dotnet user-secrets --project src set "Tracker:Transport:Proxies:0:Password" "<password>"
 ```
-or build and run from Visual Studio
->Note: Seeding data from the first running can take a long time
-## Examples
-See the [Telegram Price Cheker](https://t.me/futpricecheker)  for example
+
+Вместо отдельных настроек можно передать JSON-файл: скопируйте `deployments/proxies.example.json` в `deployments/proxies.local.json`, заполните его и задайте `Tracker:Transport:ProxiesFile` абсолютным путём. Формат — массив объектов `Server`, `Username`, `Password`; логин/пароль необязательны. Локальный файл исключён из Git. Разрешены HTTP, HTTPS и SOCKS5-прокси. Выберите один источник: массив `Proxies`, файл `ProxiesFile` или провайдер; пустой файл/ответ провайдера не включает прямой доступ. Системные proxy-переменные окружения для запросов FUTBIN игнорируются.
+
+Добавьте индексы 1, 2, … для остальных прокси. `MaxConcurrency` ограничивает количество workers; если прокси заданы, workers не больше числа прокси. Используются первые `min(MaxConcurrency, число прокси)` записей списка; чтобы задействовать 5 прокси, задайте `MaxConcurrency=5` (допустимо 1–20). По умолчанию глобальный интервал стартов запросов — 1500 мс, интервал одной сессии — 2000 мс. Прокси позволяют перекрывать задержки запросов, сохраняя общий предел частоты. `ScanIntervalSeconds` — пауза **после завершения** прохода.
+
+Сохранена совместимость с прежним провайдером: `Tracker:Transport:ProxyProviderUrl` + `ProxyProviderApiKey`, POST с полями `type`, `page`, `page_size`, `sort`; ответ `list.data` с `ip`, `http_port`, `login`, `password`. URL должен быть HTTPS. Пустой ответ провайдера считается ошибкой, прямого запасного подключения нет.
+
+## Хранение и диагностика
+
+Каждый прочитанный снимок сохраняется в `data/observations/YYYY-MM-DD.jsonl`: идентификатор карточки, атрибуты, платформа, пять цен, даты/суммы/результаты аукционов, ликвидность, решение и причина отказа. Эти записи нужны для проверки и последующей калибровки. Между проходами строки продаж не суммируются: в текущем DOM нет стабильного ID аукциона, одинаковые время/сумма могут принадлежать разным сделкам.
+
+Ротация файлов по дню автоматическая; удаление старых файлов пока нужно настроить самостоятельно. Следите за свободным местом. Ошибка записи наблюдения не допускает отправку сигнала без аудита.
+
+`GET /health` возвращает состояние и время последнего успешного прохода. До первого успешного прохода, при неполном проходе или недоступности источника — HTTP 503; после успешного прохода — 200. Рабочие состояния: starting, scanning, ready, degraded, source_unavailable.
+
+Защита от дублей — атомарная аренда `(сезон, ID карточки, платформа)` на 20 минут. При ошибке отправки освобождается только своя аренда. Без Redis состояние теряется при перезапуске; с Redis оно общее для всех процессов. Telegram не предоставляет ключ идемпотентности для sendMessage: при сетевом таймауте после фактической доставки возможен повтор при следующем проходе.
+
+## Docker
+
+```sh
+cp deployments/.env.example deployments/.env
+# При необходимости заполните Telegram-параметры; исходно включён dry-run.
+docker compose -f deployments/docker-compose.yaml up --build -d
+docker compose -f deployments/docker-compose.yaml logs -f app
+curl http://127.0.0.1:9000/health
+```
+
+Сборка запускает C#- и Python-тесты, устанавливает Python/libcurl. Браузерных пакетов и драйверов в образе нет. Приложение работает от пользователя `app`, Redis доступен только внутри Compose, наблюдения и Redis сохраняются в именованных томах. Включён init для уборки дочерних HTTP-процессов.
+
+Запуск со списком прокси:
+
+```sh
+cp deployments/proxies.example.json deployments/proxies.local.json
+# Заполните файл своими прокси. Убедитесь, что пользователь контейнера может читать файл.
+TRACKER_MAX_CONCURRENCY=2 docker compose -f deployments/docker-compose.yaml -f deployments/compose.proxies.yaml up --build -d
+```
+
+Файл монтируется только для чтения; proxy-пароли не передаются в аргументах процессов и не выводятся в логи.
+
+Прежний демонстрационный стек Grafana/Loki/Prometheus удалён из основного Compose: он не был связан с новой системой наблюдений. Логи приложения доступны через stdout; внешнее наблюдение можно подключить отдельно.
+
+## Проверки
+
+```sh
+python -m unittest discover -s tests -p 'test_*.py'
+dotnet test fbtracker.sln -c Release
+docker build -f src/dockerfile -t fbtracker:fc27 .
+```
+
+Тесты не обращаются к FUTBIN или Telegram; для сетевых проверок поднимаются локальные фиктивные CONNECT-прокси. Остальные проверки используют сохранённые фрагменты реального DOM и искусственные граничные случаи. Проверяют идентичность карточек, исключение SBC/objectives, цены/платформы/историю, даты, ликвидность и прибыль, параллельное выполнение, кэш каталога, блокировку источника и атомарную защиту от дублей. Сетевые тесты проверяют одновременные CONNECT-запросы через два разных прокси, Basic-аутентификацию и отмену зависшего запроса. CI также собирает публикацию .NET 10.

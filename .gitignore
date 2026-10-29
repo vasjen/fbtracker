@@ -489,3 +489,9 @@ $RECYCLE.BIN/
 # Images folders 
 Cards/
 Promo/
+
+# Local observations and HTTP runtime
+**/data/
+.venv/
+
+proxies.local.json

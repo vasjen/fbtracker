@@ -1,0 +1,10 @@
+.git
+**/bin
+**/obj
+**/data
+.env
+**/*.user
+img
+
+.venv
+**/proxies.local.json
