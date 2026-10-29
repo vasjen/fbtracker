@@ -171,7 +171,7 @@ public sealed class FutbinParser(TrackerOptions options)
 
     public DateTimeOffset? ParseSaleTime(string text, DateTimeOffset now)
     {
-        // Rendered FUTBIN dates omit the year. Never guess an ambiguous DST hour.
+        // Server-rendered FUTBIN dates omit the year. Never guess an ambiguous DST hour.
         var localNow = TimeZoneInfo.ConvertTime(now, _zone);
         foreach (int year in new[] { localNow.Year, localNow.Year - 1 })
         {

@@ -1,0 +1,4 @@
+[
+  {"Server": "http://proxy-one.example:8080", "Username": "replace-me", "Password": "replace-me"},
+  {"Server": "http://proxy-two.example:8080", "Username": "replace-me", "Password": "replace-me"}
+]

@@ -28,29 +28,33 @@ public sealed class TrackerOptions
         if (Platforms.Length == 0 || Platforms.Any(p => !Enum.IsDefined(p)))
             throw new ArgumentException("Select Console and/or Pc platforms.");
         _ = TimeZoneInfo.FindSystemTimeZoneById(SourceTimeZone);
-        if (Transport.Mode is not ("Browser" or "Http") || Transport.RequestTimeoutSeconds < 1 ||
+        if (Transport.Mode is not ("CurlCffi" or "Http") || Transport.RequestTimeoutSeconds < 1 ||
             Transport.GlobalIntervalMilliseconds < 1 || Transport.SessionIntervalMilliseconds < 1 ||
             Transport.BlockCooldownSeconds < 1 || Transport.RetryCount is < 0 or > 5)
-            throw new ArgumentException("Invalid transport settings.");
+            throw new ArgumentException("Invalid transport settings. Only CurlCffi and Http are supported.");
+        if (string.IsNullOrWhiteSpace(Transport.PythonExecutable)) throw new ArgumentException("PythonExecutable is required.");
         if (!Notifications.DryRun && (string.IsNullOrWhiteSpace(Notifications.Token) ||
             string.IsNullOrWhiteSpace(Notifications.ChatId)))
             throw new ArgumentException("Telegram Token and ChatId are required when DryRun is false.");
         if (Notifications.CooldownMinutes < 1) throw new ArgumentException("Cooldown must be positive.");
+        if ((Transport.Proxies.Length > 0 ? 1 : 0) + (!string.IsNullOrWhiteSpace(Transport.ProxiesFile) ? 1 : 0) +
+            (!string.IsNullOrWhiteSpace(Transport.ProxyProviderUrl) ? 1 : 0) > 1)
+            throw new ArgumentException("Configure one proxy source: Proxies, ProxiesFile or ProxyProviderUrl.");
         Signals.Validate();
     }
 }
 
 public sealed class TransportOptions
 {
-    public string Mode { get; set; } = "Browser";
-    public bool Headless { get; set; } = true;
-    public string? BrowserChannel { get; set; }
+    public string Mode { get; set; } = "CurlCffi";
+    public string PythonExecutable { get; set; } = "python3";
     public int RequestTimeoutSeconds { get; set; } = 30;
     public int GlobalIntervalMilliseconds { get; set; } = 1500;
     public int SessionIntervalMilliseconds { get; set; } = 2000;
     public int BlockCooldownSeconds { get; set; } = 120;
     public int RetryCount { get; set; } = 2;
     public ProxyOptions[] Proxies { get; set; } = [];
+    public string? ProxiesFile { get; set; } = null;
     public string? ProxyProviderUrl { get; set; }
     public string? ProxyProviderApiKey { get; set; }
 }

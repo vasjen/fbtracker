@@ -6,21 +6,25 @@ COPY tests/FbTracker.Tests.csproj tests/
 RUN dotnet restore fbtracker.sln
 COPY src/ src/
 COPY tests/ tests/
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates \
+    && python3 -m venv /opt/http-runtime \
+    && /opt/http-runtime/bin/pip install --no-cache-dir -r src/Transport/requirements.txt \
+    && rm -rf /var/lib/apt/lists/*
+ENV FBTRACKER_TEST_PYTHON=/opt/http-runtime/bin/python
+RUN /opt/http-runtime/bin/python -m unittest discover -s tests -p 'test_*.py'
 RUN dotnet test fbtracker.sln -c Release --no-restore
 RUN dotnet publish src/fbtracker.csproj -c Release --no-restore -o /publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    ASPNETCORE_HTTP_PORTS=8080 \
+ENV ASPNETCORE_HTTP_PORTS=8080 \
     Tracker__ObservationDirectory=/app/data/observations
 WORKDIR /app
 COPY --from=build /publish/ ./
-RUN dotnet fbtracker.dll --install-browser-with-deps \
-    && mkdir -p /app/data \
-    && chown -R app:app /app/data \
-    && chmod -R a+rX /app/.playwright \
-    && chmod -R a+rX /ms-playwright \
+COPY --from=build /opt/http-runtime /opt/http-runtime
+RUN apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates \
+    && mkdir -p /app/data && chown -R app:app /app/data \
     && rm -rf /var/lib/apt/lists/*
+ENV Tracker__Transport__PythonExecutable=/opt/http-runtime/bin/python
 USER app
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "fbtracker.dll"]

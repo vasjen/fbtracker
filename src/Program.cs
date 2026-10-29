@@ -6,12 +6,6 @@ using FbTracker.Services;
 using FbTracker.Storage;
 using StackExchange.Redis;
 
-if (args.Contains("--install-browser") || args.Contains("--install-browser-with-deps"))
-{
-    Environment.ExitCode = Microsoft.Playwright.Program.Main(args.Contains("--install-browser-with-deps")
-        ? ["install", "--with-deps", "chromium"] : ["install", "chromium"]);
-    return;
-}
 bool once = args.Contains("--once");
 bool dryRun = args.Contains("--dry-run");
 var configurationArgs = args.Where(a => a is not ("--once" or "--dry-run") &&
@@ -61,7 +55,7 @@ if (once)
     {
         // Do not log exception messages which could contain proxy or Telegram credentials.
         string reason = error is SourceFormatException or SourceUnavailableException ? error.Message : error.GetType().Name;
-        app.Logger.LogError("Scan did not complete: {Reason}. Check source access, browser installation and configuration.", reason);
+        app.Logger.LogError("Scan did not complete: {Reason}. Check source access and HTTP/proxy configuration.", reason);
         Environment.ExitCode = 1;
     }
 }

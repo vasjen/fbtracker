@@ -5,7 +5,6 @@ services:
       context: ..
       dockerfile: src/dockerfile
     init: true
-    shm_size: 1gb
     ports:
       - "127.0.0.1:9000:8080"
     volumes:

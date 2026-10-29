@@ -490,6 +490,8 @@ $RECYCLE.BIN/
 Cards/
 Promo/
 
-# Local observations and browser caches
+# Local observations and HTTP runtime
 **/data/
-**/.playwright-browsers/
+.venv/
+
+proxies.local.json

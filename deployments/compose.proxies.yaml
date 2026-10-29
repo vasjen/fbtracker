@@ -1,0 +1,7 @@
+services:
+  app:
+    volumes:
+      - ./proxies.local.json:/run/secrets/futbin-proxies.json:ro
+    environment:
+      Tracker__Transport__ProxiesFile: /run/secrets/futbin-proxies.json
+      Tracker__MaxConcurrency: ${TRACKER_MAX_CONCURRENCY:-2}

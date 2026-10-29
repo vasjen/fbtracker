@@ -8,6 +8,22 @@ public class ParserTests
     private readonly FutbinParser _parser = new(Samples.Options());
 
     [Fact]
+    public void Raw_HTTP_responses_have_catalog_prices_and_sales_without_script_execution()
+    {
+        var catalog = _parser.ParseCatalog(Samples.Document(Samples.Fixture("catalog-http.html")));
+        Assert.Equal(30, catalog.Cards.Count);
+        var now = new DateTimeOffset(2026, 10, 29, 14, 12, 0, TimeSpan.Zero);
+        var page = Samples.Document(Samples.Fixture("market-http.html"), "/27/player/8/kylian-mbappe/market") with { FetchedAt = now };
+        var snapshots = _parser.ParseMarket(Samples.Card(), page);
+        var console = Assert.Single(snapshots, s => s.Key.Platform == Platform.Console);
+        var pc = Assert.Single(snapshots, s => s.Key.Platform == Platform.Pc);
+        Assert.Equal(new long?[] { 3300000, 3310000, 3310000, 3400000, 3400000 }, console.LowestPrices);
+        Assert.Equal(new long?[] { 3429000, 3430000, 3450000, 3460000, 3469000 }, pc.LowestPrices);
+        Assert.All(snapshots, s => { Assert.True(s.HistoryAvailable); Assert.NotEmpty(s.Auctions); });
+        Assert.Contains(console.Auctions, a => a.EndedAt == new DateTimeOffset(2026, 10, 29, 14, 3, 0, TimeSpan.Zero) && a.SoldFor == 3294000);
+    }
+
+    [Fact]
     public void Real_filtered_catalog_has_distinct_tradeable_cards()
     {
         var result = _parser.ParseCatalog(Samples.Document(Samples.Fixture("catalog-filtered.html")));

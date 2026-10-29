@@ -97,8 +97,8 @@ public sealed class ScannerWorker(TrackerOptions options, Scanner scanner, ScanH
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
         catch (Exception error)
         {
-            // Driver/provider errors can contain proxy credentials; do not let the host log the original exception.
-            throw new InvalidOperationException($"Could not initialize source sessions ({error.GetType().Name}). Check browser installation and proxy configuration.");
+            // Transport/provider errors can contain proxy credentials; do not let the host log the original exception.
+            throw new InvalidOperationException($"Could not initialize source sessions ({error.GetType().Name}). Check HTTP dependencies and proxy configuration.");
         }
         await using var poolLifetime = pool;
         while (!stoppingToken.IsCancellationRequested)
